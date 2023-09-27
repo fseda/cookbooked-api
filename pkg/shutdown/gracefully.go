@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/gofiber/fiber/v2/log"
 )
 
 func Gracefully() {
@@ -11,5 +13,5 @@ func Gracefully() {
 	defer close(quit)
 
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	log.Infof("\nGracefully shutdown (%v)\n", <-quit)
 }

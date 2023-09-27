@@ -30,20 +30,18 @@ CREATE TABLE tags (
 	CONSTRAINT user_tags_must_be_unique UNIQUE (user_id, name, is_system_tag),
 	CONSTRAINT FK_tags_users FOREIGN KEY (user_id)
 		REFERENCES users (id)
-		ON DELETE SET CASCADE
+		ON DELETE SET NULL
 );
 
 CREATE TABLE ingredients (
-	id SERIAL PRIMARY KEY,
-	name VARCHAR(100) NOT NULL,
-	icon TEXT,
-	is_system_ingredient BOOLEAN DEFAULT FALSE NOT NULL,
-	user_id INT,
-
-	CONSTRAINT user_ingredients_must_be_unique UNIQUE (user_id, name, is_system_ingredient),
-	CONSTRAINT FK_ingredients_users FOREIGN KEY (user_id)
-		REFERENCES users (id)
-		ON DELETE CASCADE
+	id SERIAL PRIMARY KEY, 
+	name VARCHAR(100) NOT NULL, 
+	icon TEXT, 
+	is_system_ingredient BOOLEAN DEFAULT FALSE NOT NULL, 
+	user_id INT, 
+	CONSTRAINT user_ingredients_must_be_unique UNIQUE (user_id, name, is_system_ingredient), 
+	CONSTRAINT FK_ingredients_users FOREIGN KEY (user_id) REFERENCES users (id)
+		ON DELETE SET NULL
 );
 
 CREATE TABLE units (
@@ -63,6 +61,7 @@ CREATE TABLE recipe_tags (
 	recipe_id INT NOT NULL,
 	tag_id INT NOT NULL,
 
+	CONSTRAINT recipe_tags_must_be_unique UNIQUE (recipe_id, tag_id),
 	CONSTRAINT FK_recipe_tags_recipes FOREIGN KEY (recipe_id)
 		REFERENCES recipes (id)
 		ON DELETE CASCADE,
@@ -79,6 +78,7 @@ CREATE TABLE recipe_ingredients (
 	ingredient_id INT NOT NULL,
 	unit_id INT NOT NULL,
 
+	CONSTRAINT recipe_ingredients_must_be_unique UNIQUE (recipe_id, ingredient_id)
 	CONSTRAINT FK_recipe_ingredients_recipe FOREIGN KEY (recipe_id)
 		REFERENCES recipes (id)
 		ON DELETE CASCADE,

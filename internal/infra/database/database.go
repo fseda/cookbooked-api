@@ -1,4 +1,4 @@
-package storage
+package database
 
 import (
 	// "context"
@@ -27,7 +27,7 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 	if err != nil {
 		log.Fatalf("Failed opening connection to postgres: %v", err)
 	}
-	
+
 	db, err = gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,
 	}), &gorm.Config{})

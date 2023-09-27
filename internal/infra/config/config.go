@@ -13,6 +13,9 @@ type Config struct {
 		Password string
 		Name     string
 	}
+	Http struct {
+		Port string
+	}
 }
 
 func NewConfig() *Config {
@@ -23,12 +26,17 @@ func NewConfig() *Config {
 			User     string
 			Password string
 			Name     string
-		}{
+		} {
 			Host:     env.GetEnvOrDie("DB_HOST"),
 			Port:     env.GetEnvOrDie("DB_PORT"),
 			User:     env.GetEnvOrDie("DB_USER"),
 			Password: env.GetEnvOrDie("DB_PASSWORD"),
 			Name:     env.GetEnvOrDie("DB_NAME"),
+		},
+		Http: struct {
+			Port string
+		} {
+			Port: env.GetEnvOrDie("PORT"),
 		},
 	}
 

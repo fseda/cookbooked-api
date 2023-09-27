@@ -1,0 +1,7 @@
+# Test binaries, created by `go test -c`
+*.test
+
+# Environment variables file
+.env
+
+tmp

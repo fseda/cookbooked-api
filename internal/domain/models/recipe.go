@@ -12,8 +12,9 @@ type Recipe struct {
 	Body              string             `gorm:"column:body; not null;" json:"body"`
 	Link              string             `gorm:"column:link; size:500; not null;" json:"link"`
 	UserID            uint               `gorm:"column:user_id; uniqueIndex:unique_user_id_title;" json:"user_id"`
+	User              User               `gorm:"foreignKey:UserID; references:ID"`
 	RecipeTags        []RecipeTag        `gorm:"constraint:OnDelete:CASCADE"`
-	RecipeIngredients []RecipeIngredient `gorm:"constraint:OnDelete:RESTRICT"`
+	RecipeIngredients []RecipeIngredient `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type RecipeTag struct {

@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+
+  # Live Reloading
+    # air:
+    #   container_name: app
+    #   image: cosmtrek/air:latest
+    #   working_dir: app
+  
+  # Development
+  app:
+    container_name: app
+    build: .
+    restart: on-failure 
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - db
+    environment:
+      - LOAD_ENV_FILE=true
+    ports:
+      - "3000:3000"
+    links:
+      - db
+    volumes:
+      - ./.env:/.env
+      - .:/build
+
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5555:5555"
+    volumes:
+      - db:/var/lib/postgres/data
+
+  # app_prod:
+
+  # db_migrate:
+  #   image: migrate/migrate
+  #   volumes: 
+  #     - ./migrations:/migrations
+  #   command: ["-path", "/migrations", "-database", "postgres://postgres:postgres@localhost:5432/cookbooked", "up"]
+volumes:
+  db:
+    driver: local

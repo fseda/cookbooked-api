@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
@@ -15,17 +16,64 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db}
 }
 
-func (r *UserRepository) create(username, email, passwordHash string) *models.User {
-	user := &models.User{
-		// Username:     username,
-		Email:        email,
-		PasswordHash: passwordHash,
+var searchFields = []string{"username", "email"}
+
+func (r *UserRepository) Create(user *models.User) (uint, error) {
+	err := r.db.Create(user).Error
+	if err != nil {
+		return 0, err
 	}
 
-	result := r.db.Create(user)
-	
-	fmt.Println(result.RowsAffected)
-	fmt.Println("user id", user.ID)
+	return user.ID, nil
+}
 
-	return user
+func (r *UserRepository) FindOneById(id uint) (*models.User, error) {
+	var user models.User
+	err := r.db.First(&user, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *UserRepository) FindOneBy(field string, value string) (*models.User, error) {
+	if searchFieldIsValid := validateSearchField(field); !searchFieldIsValid {
+		return nil, fmt.Errorf("invalid search field: %v, must be %v", field, searchFields)
+	}
+
+	var user models.User
+	queryStr := fmt.Sprintf("%v = ?", field)
+	err := r.db.Select(field).Where(queryStr, value).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *UserRepository) UserExists(field string, value string) (bool, error) {
+	if searchFieldIsValid := validateSearchField(field); !searchFieldIsValid {
+		return false, fmt.Errorf("invalid search field: %v, must be %v", field, searchFields)
+	}
+
+	var user models.User
+	queryStr := fmt.Sprintf("%v = ?", field)
+	if err := r.db.Select(field).Where(queryStr, value).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}
+
+func validateSearchField(field string) bool {
+	for _, item := range searchFields {
+		if item == field {
+			return true
+		}
+	}
+	return false
 }

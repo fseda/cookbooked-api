@@ -34,10 +34,7 @@ type CreateUserResponse struct {
 func (u *UserController) Create(c *fiber.Ctx) error {
 	var req CreateUserRequest
 	if err := c.BodyParser(&req); err != nil {
-		return &fiber.Error{
-			Code:    fiber.ErrBadRequest.Code,
-			Message: err.Error(),
-		}
+		return httpstatus.UnprocessableEntityError("Unable to parse request body.")
 	}
 
 	if errMsgs := validation.MyValidator.CreateErrorResponse(req); len(errMsgs) > 0 {

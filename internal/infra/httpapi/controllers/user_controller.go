@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
@@ -13,26 +14,32 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserController struct {
-	service *services.UserService
+type UserController interface {
+	Create(c *fiber.Ctx) error
+	FindOne(c *fiber.Ctx) error
+	Delete(c *fiber.Ctx) error
 }
 
-func NewUserController(service *services.UserService) *UserController {
-	return &UserController{service}
+type userController struct {
+	service services.UserService
 }
 
-type CreateUserRequest struct {
+func NewUserController(service services.UserService) UserController {
+	return &userController{service}
+}
+
+type createUserRequest struct {
 	Username string `json:"username" validate:"required=true,min=3,max=255,alphanum"`
 	Email    string `json:"email" validate:"required=true,email"`
 	Password string `json:"password" validate:"required=true,min=6,max=72"`
 }
 
-type CreateUserResponse struct {
+type createUserResponse struct {
 	*models.User
 }
 
-func (u *UserController) Create(c *fiber.Ctx) error {
-	var req CreateUserRequest
+func (u *userController) Create(c *fiber.Ctx) error {
+	var req createUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return httpstatus.UnprocessableEntityError("Unable to parse request body.")
 	}
@@ -43,25 +50,25 @@ func (u *UserController) Create(c *fiber.Ctx) error {
 
 	user, err := u.service.Create(req.Username, req.Email, req.Password)
 	if err != nil {
-		if err == u.service.CreateUserErrors.EmailExists {
-			msg := fmt.Sprintf("%s (%s)", u.service.CreateUserErrors.EmailExists.Error(), req.Email)
+		if err == globalerrors.UserEmailExists {
+			msg := fmt.Sprintf("%s (%s)", globalerrors.UserEmailExists, req.Email)
 			return httpstatus.BadRequestError(msg)
 		}
 
-		if err == u.service.CreateUserErrors.UsernameExists {
-			msg := fmt.Sprintf("%s (%s)", u.service.CreateUserErrors.UsernameExists.Error(), req.Username)
+		if err == globalerrors.UserUsernameExists {
+			msg := fmt.Sprintf("%s (%s)", globalerrors.UserUsernameExists, req.Username)
 			return httpstatus.BadRequestError(msg)
 		}
 
 		return httpstatus.InternalServerError(err.Error())
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(CreateUserResponse{
+	return c.Status(fiber.StatusCreated).JSON(createUserResponse{
 		user,
 	})
 }
 
-func (u *UserController) FindOne(c *fiber.Ctx) error {
+func (u *userController) FindOne(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -81,7 +88,7 @@ func (u *UserController) FindOne(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
-func (u *UserController) Delete(c *fiber.Ctx) error {
+func (u *userController) Delete(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -99,5 +106,3 @@ func (u *UserController) Delete(c *fiber.Ctx) error {
 
 	return c.SendStatus(fiber.StatusOK)
 }
-
-

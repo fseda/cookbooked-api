@@ -8,21 +8,29 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository struct {
+type UserRepository interface {
+	Create(user *models.User) error
+	FindOneById(id uint) (*models.User, error)
+	FindOneBy(field string, value string) (*models.User, error)
+	Delete(id uint) (int64, error)
+	UserExists(field string, value string) (bool, error)
+}
+
+type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{db}
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepository{db}
 }
 
 var searchFields = []string{"username", "email"}
 
-func (r *UserRepository) Create(user *models.User) error {
+func (r *userRepository) Create(user *models.User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *UserRepository) FindOneById(id uint) (*models.User, error) {
+func (r *userRepository) FindOneById(id uint) (*models.User, error) {
 	var user models.User
 	err := r.db.Omit("PasswordHash").First(&user, id).Error
 	if err != nil {
@@ -31,7 +39,7 @@ func (r *UserRepository) FindOneById(id uint) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepository) FindOneBy(field string, value string) (*models.User, error) {
+func (r *userRepository) FindOneBy(field string, value string) (*models.User, error) {
 	if searchFieldIsValid := validateSearchField(field); !searchFieldIsValid {
 		return nil, fmt.Errorf("invalid search field: %v, must be %v", field, searchFields)
 	}
@@ -46,12 +54,12 @@ func (r *UserRepository) FindOneBy(field string, value string) (*models.User, er
 	return &user, nil
 }
 
-func (r *UserRepository) Delete(id uint) (int64, error) {
+func (r *userRepository) Delete(id uint) (int64, error) {
 	res := r.db.Delete(&models.User{}, id)
 	return res.RowsAffected, res.Error
 }
 
-func (r *UserRepository) UserExists(field string, value string) (bool, error) {
+func (r *userRepository) UserExists(field string, value string) (bool, error) {
 	if searchFieldIsValid := validateSearchField(field); !searchFieldIsValid {
 		return false, fmt.Errorf("invalid search field: %v, must be %v", field, searchFields)
 	}

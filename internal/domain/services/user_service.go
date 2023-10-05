@@ -1,16 +1,20 @@
 package services
 
 import (
-	"errors"
-
+	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-	repository       *repositories.UserRepository
-	CreateUserErrors *_createUserErrors
+type UserService interface {
+	FindByID(id uint) (*models.User, error)
+	Create(username, email, password string) (*models.User, error)
+	Delete(id uint) (int64, error)
+}
+
+type userService struct {
+	repository repositories.UserRepository
 }
 
 type _createUserErrors struct {
@@ -18,19 +22,11 @@ type _createUserErrors struct {
 	UsernameExists error
 }
 
-var createUserErrors = &_createUserErrors{
-	EmailExists:    errors.New("email already exists"),
-	UsernameExists: errors.New("username already exists"),
+func NewUserService(repository repositories.UserRepository) UserService {
+	return &userService{repository}
 }
 
-func NewUserService(repository *repositories.UserRepository) *UserService {
-	return &UserService{
-		repository,
-		createUserErrors,
-	}
-}
-
-func (us *UserService) FindByID(id uint) (*models.User, error) {
+func (us *userService) FindByID(id uint) (*models.User, error) {
 	user, err := us.repository.FindOneById(id)
 	if err != nil {
 		return nil, err
@@ -38,16 +34,16 @@ func (us *UserService) FindByID(id uint) (*models.User, error) {
 	return user, nil
 }
 
-func (us *UserService) Create(username, email, password string) (*models.User, error) {
+func (us *userService) Create(username, email, password string) (*models.User, error) {
 
 	usernameExists, _ := us.repository.UserExists("username", username)
 	if usernameExists {
-		return nil, createUserErrors.UsernameExists
+		return nil, globalerrors.UserUsernameExists
 	}
 
 	emailExists, _ := us.repository.UserExists("email", email)
 	if emailExists {
-		return nil, createUserErrors.EmailExists
+		return nil, globalerrors.UserEmailExists
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), -1)
@@ -68,6 +64,6 @@ func (us *UserService) Create(username, email, password string) (*models.User, e
 	return user, nil
 }
 
-func (us *UserService) Delete(id uint) (int64, error) {
+func (us *userService) Delete(id uint) (int64, error) {
 	return us.repository.Delete(id)
 }

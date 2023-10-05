@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"strings"
 
 	"github.com/fseda/cookbooked-api/internal/infra/config"
 	"github.com/fseda/cookbooked-api/internal/infra/database"
@@ -69,17 +68,7 @@ func buildServer(env *config.Config) (*fiber.App, func(), error) {
 		ErrorHandler: httpstatus.ErrorHandler,
 	})
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: strings.Join([]string{
-			fiber.MethodGet,
-			fiber.MethodPost,
-			fiber.MethodDelete,
-			fiber.MethodPut,
-			fiber.MethodPatch,
-			fiber.MethodHead,
-		}, ","),
-	}))
+	app.Use(cors.New())
 	app.Use(logger.New())
 	app.Use(helmet.New())
 	app.Use(idempotency.New())

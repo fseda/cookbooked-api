@@ -92,64 +92,46 @@ CREATE TABLE recipe_ingredients (
 		ON DELETE RESTRICT;
 );
 
-
-CREATE OR REPLACE FUNCTION prevent_update_of_protected_columns(
-	protect_column TEXT
-)
-	RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION prevent_update_of_default_system_values_function()
+  RETURNS TRIGGER AS $$
+	DECLARE
+		table_name text;
+		is_system_column text;
+		name_column text;
 	BEGIN
-		IF NEW.protected_column IS DISTINCT FROM OLD.protected_column THEN
-			RAISE EXCEPTION 'Cannot update protected column: %', protect_column;
+		-- Get the name of the table associated with the trigger
+		table_name := TG_TABLE_NAME;
+
+		-- Determine the corresponding column names
+		CASE table_name
+			WHEN 'tags' THEN
+				is_system_column := 'is_system_tag';
+				name_column := 'name';
+			WHEN 'ingredients' THEN
+				is_system_column := 'is_system_ingredient';
+				name_column := 'name';
+			WHEN 'units' THEN
+				is_system_column := 'is_system_unit';
+				name_column := 'name';
+			-- Add more cases for other tables if needed
+		END CASE;
+
+		IF OLD.is_system_column = TRUE THEN
+			IF NEW.name_column IS DISTINCT FROM OLD.name_column THEN
+				RAISE EXCEPTION 'Cannot update "%" column of (%) system default values', name_column, table_name;
+			END IF;
 		END IF;
 
-		RETURN NEW;
-	END;
-	$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER prevent_update_of_is_system_tag
-	BEFORE UPDATE ON tags
-	FOR EACH ROW
-	EXECUTE FUNCTION prevent_update_of_protected_columns('is_system_tag');
-
-CREATE TRIGGER prevent_update_of_is_system_ingredient
-	BEFORE UPDATE ON ingredients
-	FOR EACH ROW
-	EXECUTE FUNCTION prevent_update_of_protected_columns('is_system_ingredient');
-
-CREATE TRIGGER prevent_update_of_is_system_unit
-	BEFORE UPDATE ON units
-	FOR EACH ROW
-	EXECUTE FUNCTION prevent_update_of_protected_columns('is_system_unit');
-
-
-CREATE OR REPLACE FUNCTION prevent_update_of_default_system_name_column(
-	name_column TEXT,
-	is_system_column TEXT
-)
-	RETURNS TRIGGER AS $$
-	BEGIN
-		IF NEW.is_system_column = TRUE THEN
-			IF NEW.name_column IS DISTINCT FROM OLD.name_column THEN
-				RAISE EXCEPTION 'Cannot update "%" column of (%) system default values', name_column, is_system_column;
-			END IF;
+		IF NEW.is_system_column IS DISTINCT FROM OLD.is_system_column THEN
+			RAISE EXCEPTION 'Cannot update "%" column of (%)', is_system_column, table_name;
 		END IF;
 		
 		RETURN NEW;
 	END;
-	$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER prevent_update_of_name_of_system_tags
-	BEFORE UPDATE ON tags
-	FOR EACH ROW
-	EXECUTE FUNCTION prevent_update_of_default_system_name_column("name", "is_system_tag");
-
-CREATE TRIGGER prevent_update_of_name_of_system_ingredients
-	BEFORE UPDATE ON ingredients
-	FOR EACH ROW
-	EXECUTE FUNCTION prevent_update_of_default_system_name_column("name", "is_system_ingredient");
-
-CREATE TRIGGER prevent_update_of_name_of_system_units
-	BEFORE UPDATE ON units
-	FOR EACH ROW
-	EXECUTE FUNCTION prevent_update_of_default_system_name_column("name", "is_system_unit");
-
+CREATE TRIGGER prevent_update_of_default_system_values
+  BEFORE UPDATE ON tags, ingredients, units
+  FOR EACH ROW
+  EXECUTE FUNCTION prevent_update_of_default_system_values_function();
+	

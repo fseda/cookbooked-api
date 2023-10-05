@@ -24,7 +24,7 @@ func (r *UserRepository) Create(user *models.User) error {
 
 func (r *UserRepository) FindOneById(id uint) (*models.User, error) {
 	var user models.User
-	err := r.db.First(&user, id).Error
+	err := r.db.Omit("PasswordHash").First(&user, id).Error
 	if err != nil {
 		return nil, err
 	}

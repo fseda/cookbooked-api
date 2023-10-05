@@ -34,6 +34,10 @@ func UnprocessableEntityError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusUnprocessableEntity, Message: msg}
 }
 
+func InternalServerError(msg string) CustomError {
+	return CustomError{Code: fiber.StatusInternalServerError, Message: msg}
+}
+
 func MethodNotAllowedError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusMethodNotAllowed, Message: msg}
 }

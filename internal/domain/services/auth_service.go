@@ -12,6 +12,7 @@ import (
 
 type AuthService interface {
 	Login(username, password string) (string, error)
+	Create(username, email, password string) (*models.User, error)
 }
 
 type authService struct {
@@ -49,4 +50,35 @@ func (as *authService) Login(username, password string) (string, error) {
 	}
 
 	return token, nil
+}
+
+
+func (as *authService) Create(username, email, password string) (*models.User, error) {
+
+	usernameExists, _ := as.repository.UserExists("username", username)
+	if usernameExists {
+		return nil, globalerrors.UserUsernameExists
+	}
+
+	emailExists, _ := as.repository.UserExists("email", email)
+	if emailExists {
+		return nil, globalerrors.UserEmailExists
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), -1)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &models.User{
+		Username:     username,
+		Email:        email,
+		PasswordHash: string(passwordHash),
+	}
+	err = as.repository.Create(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

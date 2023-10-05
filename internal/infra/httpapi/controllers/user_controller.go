@@ -3,20 +3,14 @@ package controllers
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
-	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
-	"github.com/fseda/cookbooked-api/internal/domain/models"
-	modelvalidation "github.com/fseda/cookbooked-api/internal/domain/models/validation"
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
-	"github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
 type UserController interface {
-	RegisterUser(c *fiber.Ctx) error
 	FindOne(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
 }
@@ -27,50 +21,6 @@ type userController struct {
 
 func NewUserController(service services.UserService) UserController {
 	return &userController{service}
-}
-
-type createUserRequest struct {
-	Username string `json:"username" validate:"required=true,min=3,max=255"`
-	Email    string `json:"email" validate:"required=true,email"`
-	Password string `json:"password" validate:"required=true,min=6,max=72"`
-}
-
-type createUserResponse struct {
-	*models.User
-}
-
-func (u *userController) RegisterUser(c *fiber.Ctx) error {
-	var req createUserRequest
-	if err := c.BodyParser(&req); err != nil {
-		return httpstatus.UnprocessableEntityError("Unable to parse request body.")
-	}
-
-	if errMsgs := validation.MyValidator.CreateErrorResponse(req); len(errMsgs) > 0 {
-		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
-	}
-
-	if modelvalidation.IsEmailLike(req.Username) {
-		return httpstatus.BadRequestError(globalerrors.UserInvalidUsername.Error())
-	}
-
-	user, err := u.service.Create(req.Username, req.Email, req.Password)
-	if err != nil {
-		if err == globalerrors.UserEmailExists {
-			msg := fmt.Sprintf("%s (%s)", globalerrors.UserEmailExists, req.Email)
-			return httpstatus.BadRequestError(msg)
-		}
-
-		if err == globalerrors.UserUsernameExists {
-			msg := fmt.Sprintf("%s (%s)", globalerrors.UserUsernameExists, req.Username)
-			return httpstatus.BadRequestError(msg)
-		}
-
-		return httpstatus.InternalServerError(err.Error())
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(createUserResponse{
-		user,
-	})
 }
 
 func (u *userController) FindOne(c *fiber.Ctx) error {

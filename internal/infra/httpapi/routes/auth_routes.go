@@ -18,6 +18,7 @@ func addAuthRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	auth := app.Group("/auth")
 
 	auth.Post("/login", authController.Login)
+	auth.Post("/signup", authController.RegisterUser)
 
 	auth.Use("/profile", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
 	auth.Get("/profile", authController.Profile)

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/infra/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -39,15 +38,18 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(
-		&models.User{},
-		&models.Ingredient{},
-		&models.RecipeIngredient{},
-		&models.Recipe{},
-		&models.RecipeTag{},
-		&models.Tag{},
-		&models.Unit{},
-	)
+	// err = db.AutoMigrate(
+	// 	models.User{},
+	// 	models.Ingredient{},
+	// 	models.RecipeIngredient{},
+	// 	models.Recipe{},
+	// 	models.RecipeTag{},
+	// 	models.Tag{},
+	// 	models.Unit{},
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return db, nil
 }

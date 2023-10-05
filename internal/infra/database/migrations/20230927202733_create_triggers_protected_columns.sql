@@ -52,17 +52,20 @@ CREATE OR REPLACE FUNCTION prevent_update_of_default_system_values_function_unit
 	END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER prevent_update_of_default_system_values_tags
+DROP TRIGGER IF EXISTS prevent_update_of_default_system_values_tags ON tags;
+CREATE TRIGGER prevent_update_of_default_system_values_tags
   BEFORE UPDATE ON tags
   FOR EACH ROW
   EXECUTE FUNCTION prevent_update_of_default_system_values_function_tags();
 
-CREATE OR REPLACE TRIGGER prevent_update_of_default_system_values_ingredients
+DROP TRIGGER IF EXISTS prevent_update_of_default_system_values_ingredients ON ingredients;
+CREATE TRIGGER prevent_update_of_default_system_values_ingredients
   BEFORE UPDATE ON ingredients
   FOR EACH ROW
   EXECUTE FUNCTION prevent_update_of_default_system_values_function_ingredients();
 
-CREATE OR REPLACE TRIGGER prevent_update_of_default_system_values_units
+DROP TRIGGER IF EXISTS prevent_update_of_default_system_values_units ON units;
+CREATE TRIGGER prevent_update_of_default_system_values_units
   BEFORE UPDATE ON ingredients
   FOR EACH ROW
   EXECUTE FUNCTION prevent_update_of_default_system_values_function_units();

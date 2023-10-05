@@ -6,7 +6,6 @@ import (
 
 type Recipe struct {
 	gorm.Model
-	ID                uint               `gorm:"column:id; primaryKey; autoIncrement; not null;" json:"id"`
 	Title             string             `gorm:"column:title; size:255; not null; uniqueIndex:unique_user_id_title;" json:"title"`
 	Description       string             `gorm:"column:description; not null;" json:"description"`
 	Body              string             `gorm:"column:body; not null;" json:"body"`

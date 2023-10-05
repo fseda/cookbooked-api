@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql/driver"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -26,7 +27,14 @@ const (
 )
 
 func (r *role) Scan(value interface{}) error {
-	*r = role(value.([]byte))
+	switch v := value.(type) {
+	case []byte:
+		*r = role(v)
+	case string:
+		*r = role(v)
+	default:
+		return fmt.Errorf("unsupported type for role: %T", value)
+	}
 	return nil
 }
 

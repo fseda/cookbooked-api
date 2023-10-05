@@ -84,4 +84,23 @@ func (u *UserController) FindOne(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
+func (u *UserController) Delete(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		return httpstatus.BadRequestError("Invalid id. Should be a positive integer.")
+	}
+
+	ra, err := u.service.Delete(uint(id))
+	if err != nil {
+		return httpstatus.InternalServerError("Could not delete user.")
+	}
+
+	if ra == 0 {
+		return c.SendStatus(fiber.StatusNoContent)
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 

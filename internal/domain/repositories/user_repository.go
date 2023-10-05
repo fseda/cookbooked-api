@@ -46,6 +46,11 @@ func (r *UserRepository) FindOneBy(field string, value string) (*models.User, er
 	return &user, nil
 }
 
+func (r *UserRepository) Delete(id uint) (int64, error) {
+	res := r.db.Delete(&models.User{}, id)
+	return res.RowsAffected, res.Error
+}
+
 func (r *UserRepository) UserExists(field string, value string) (bool, error) {
 	if searchFieldIsValid := validateSearchField(field); !searchFieldIsValid {
 		return false, fmt.Errorf("invalid search field: %v, must be %v", field, searchFields)

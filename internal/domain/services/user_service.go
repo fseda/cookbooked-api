@@ -67,3 +67,7 @@ func (us *UserService) Create(username, email, password string) (*models.User, e
 
 	return user, nil
 }
+
+func (us *UserService) Delete(id uint) (int64, error) {
+	return us.repository.Delete(id)
+}

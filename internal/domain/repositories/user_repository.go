@@ -18,13 +18,8 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 
 var searchFields = []string{"username", "email"}
 
-func (r *UserRepository) Create(user *models.User) (uint, error) {
-	err := r.db.Create(user).Error
-	if err != nil {
-		return 0, err
-	}
-
-	return user.ID, nil
+func (r *UserRepository) Create(user *models.User) error {
+	return r.db.Create(user).Error
 }
 
 func (r *UserRepository) FindOneById(id uint) (*models.User, error) {

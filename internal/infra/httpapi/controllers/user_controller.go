@@ -1,13 +1,16 @@
 package controllers
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type UserController struct {
@@ -25,7 +28,7 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	ID uint `json:"id"`
+	*models.User
 }
 
 func (u *UserController) Create(c *fiber.Ctx) error {
@@ -38,37 +41,47 @@ func (u *UserController) Create(c *fiber.Ctx) error {
 	}
 
 	if errMsgs := validation.MyValidator.CreateErrorResponse(req); len(errMsgs) > 0 {
-		return &fiber.Error{
-			Code:    fiber.ErrBadRequest.Code,
-			Message: strings.Join(errMsgs, " and "),
-		}
+		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
 	}
 
-	id, err := u.service.Create(req.Username, req.Email, req.Password)
+	user, err := u.service.Create(req.Username, req.Email, req.Password)
 	if err != nil {
-		return &fiber.Error{
-			Code:    fiber.ErrBadRequest.Code,
-			Message: err.Error(),
+		if err == u.service.CreateUserErrors.EmailExists {
+			msg := fmt.Sprintf("%s (%s)", u.service.CreateUserErrors.EmailExists.Error(), req.Email)
+			return httpstatus.BadRequestError(msg)
 		}
+
+		if err == u.service.CreateUserErrors.UsernameExists {
+			msg := fmt.Sprintf("%s (%s)", u.service.CreateUserErrors.UsernameExists.Error(), req.Username)
+			return httpstatus.BadRequestError(msg)
+		}
+
+		return httpstatus.InternalServerError(err.Error())
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(CreateUserResponse{
-		ID: id,
+		user,
 	})
 }
 
 func (u *UserController) FindOne(c *fiber.Ctx) error {
-	idStr := c.Params("id", "0")
+	idStr := c.Params("id")
 
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		return httpstatus.BadRequestError("Invalid id. Should be an integer.")
+		return httpstatus.BadRequestError("Invalid id. Should be a positive integer.")
 	}
 
 	user, err := u.service.FindByID(uint(id))
+	if err == gorm.ErrRecordNotFound {
+		msg := fmt.Sprintf("User with ID %d not found", id)
+		return httpstatus.NotFoundError(msg)
+	}
 	if err != nil {
-		return httpstatus.NotFoundError(err.Error())
+		return httpstatus.InternalServerError(err.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(user)
 }
+
+

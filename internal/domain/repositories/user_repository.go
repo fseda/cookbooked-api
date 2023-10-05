@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
+	modelvalidation "github.com/fseda/cookbooked-api/internal/domain/models/validation"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +15,7 @@ type UserRepository interface {
 	FindOneBy(field string, value string) (*models.User, error)
 	Delete(id uint) (int64, error)
 	UserExists(field string, value string) (bool, error)
+	FindOneForLogin(input string) (*models.User, error)
 }
 
 type userRepository struct {
@@ -46,12 +48,35 @@ func (r *userRepository) FindOneBy(field string, value string) (*models.User, er
 
 	var user models.User
 	queryStr := fmt.Sprintf("%v = ?", field)
-	err := r.db.Select(field).Where(queryStr, value).First(&user).Error
-	if err != nil {
+	if err := r.db.Where(queryStr, value).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
-
 	return &user, nil
+}
+
+func (r *userRepository) FindOneForLogin(input string) (*models.User, error) {
+	var user *models.User
+	var err error
+
+	if modelvalidation.IsEmailLike(input) {
+		user, err = r.FindOneBy("email", input)
+		if user != nil && err == nil {
+			return user, nil
+		}
+	} else {
+		user, err := r.FindOneBy("username", input)
+		if user != nil && err == nil {
+			return user, nil
+		}
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return nil, err
 }
 
 func (r *userRepository) Delete(id uint) (int64, error) {

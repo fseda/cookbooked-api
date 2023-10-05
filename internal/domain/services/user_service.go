@@ -1,7 +1,7 @@
 package services
 
 import (
-	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
+	"github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
 	"golang.org/x/crypto/bcrypt"
@@ -15,11 +15,6 @@ type UserService interface {
 
 type userService struct {
 	repository repositories.UserRepository
-}
-
-type _createUserErrors struct {
-	EmailExists    error
-	UsernameExists error
 }
 
 func NewUserService(repository repositories.UserRepository) UserService {

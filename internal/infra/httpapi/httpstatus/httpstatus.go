@@ -38,6 +38,10 @@ func InternalServerError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusInternalServerError, Message: msg}
 }
 
+func UnauthorizedError(msg string) CustomError {
+	return CustomError{Code: fiber.StatusUnauthorized, Message: msg}
+}
+
 func MethodNotAllowedError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusMethodNotAllowed, Message: msg}
 }

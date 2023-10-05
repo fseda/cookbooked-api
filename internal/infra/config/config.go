@@ -14,7 +14,8 @@ type Config struct {
 		Name     string
 	}
 	Http struct {
-		Port string
+		Port         string
+		JWTSecretKey []byte
 	}
 }
 
@@ -26,7 +27,7 @@ func NewConfig() *Config {
 			User     string
 			Password string
 			Name     string
-		} {
+		}{
 			Host:     env.GetEnvOrDie("DB_HOST"),
 			Port:     env.GetEnvOrDie("DB_PORT"),
 			User:     env.GetEnvOrDie("DB_USER"),
@@ -34,9 +35,11 @@ func NewConfig() *Config {
 			Name:     env.GetEnvOrDie("DB_NAME"),
 		},
 		Http: struct {
-			Port string
-		} {
-			Port: env.GetEnvOrDie("PORT"),
+			Port         string
+			JWTSecretKey []byte
+		}{
+			Port:         env.GetEnvOrDie("PORT"),
+			JWTSecretKey: []byte(env.GetEnvOrDie("JWT_SECRET_KEY")),
 		},
 	}
 

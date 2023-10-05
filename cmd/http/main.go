@@ -91,8 +91,8 @@ func buildServer(env *config.Config) (*fiber.App, func(), error) {
 	})
 
 	// app.Get("/swagger", swagger.HandlerDefault)
-	router := routes.NewRouter()
-	router.AddRoutes(app, db)
+	appContext := config.NewAppContext(app, db, env)
+	routes.AddRoutes(appContext)
 
 	return app, func() {
 		database.CloseDB(db)

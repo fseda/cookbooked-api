@@ -14,7 +14,7 @@ func addUserRoutes(app *fiber.App, db *gorm.DB) {
 	userController := controllers.NewUserController(userService)
 
 	users := app.Group("/users")
-	users.Post("/", userController.Create)
+	users.Post("/", userController.RegisterUser)
 	users.Get("/:id", userController.FindOne)
 	users.Delete("/:id", userController.Delete)
 }

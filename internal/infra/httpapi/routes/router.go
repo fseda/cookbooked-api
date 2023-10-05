@@ -1,16 +1,10 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
+	"github.com/fseda/cookbooked-api/internal/infra/config"
 )
 
-type Router struct{}
-
-func NewRouter() *Router {
-	return &Router{}
-}
-
-func (r *Router) AddRoutes(app *fiber.App, db *gorm.DB) {
-	addUserRoutes(app, db)
+func AddRoutes(ctx *config.AppContext) {
+	addUserRoutes(ctx.App, ctx.DB)
+	addAuthRoutes(ctx.App, ctx.DB, ctx.Env)
 }

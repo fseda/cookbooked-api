@@ -6,6 +6,8 @@ import (
 
 	"github.com/fseda/cookbooked-api/internal/infra/config"
 	"github.com/fseda/cookbooked-api/internal/infra/database"
+	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
+	"github.com/fseda/cookbooked-api/internal/infra/httpapi/routes"
 	"github.com/fseda/cookbooked-api/pkg/shutdown"
 	"github.com/joho/godotenv"
 
@@ -21,7 +23,7 @@ func main() {
 	// Exit code for graceful shutdown
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
-	
+
 	// If not able to get env, app logs Fatal error
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -63,7 +65,9 @@ func buildServer(env *config.Config) (*fiber.App, func(), error) {
 		return nil, nil, err
 	}
 
-	app := fiber.New(fiber.Config{})
+	app := fiber.New(fiber.Config{
+		ErrorHandler: httpstatus.ErrorHandler,
+	})
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
@@ -98,6 +102,8 @@ func buildServer(env *config.Config) (*fiber.App, func(), error) {
 	})
 
 	// app.Get("/swagger", swagger.HandlerDefault)
+	router := routes.NewRouter()
+	router.AddRoutes(app, db)
 
 	return app, func() {
 		database.CloseDB(db)

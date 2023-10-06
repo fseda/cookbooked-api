@@ -19,5 +19,14 @@ COPY --from=base ["build/http-server", "/http-server"]
 
 ENV GO_ENV=production
 
+ARG PGHOST
+ARG PGPORT
+ARG PGUSER
+ARG PGPASSWORD
+ARG PGDATABASE
+ARG DATABASE_URL
+ARG SERVER_PORT
+ARG JWT_SECRET_KEY
+
 CMD ["/http-server"]
 

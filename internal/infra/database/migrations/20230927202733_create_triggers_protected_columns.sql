@@ -66,7 +66,7 @@ CREATE TRIGGER prevent_update_of_default_system_values_ingredients
 
 DROP TRIGGER IF EXISTS prevent_update_of_default_system_values_units ON units;
 CREATE TRIGGER prevent_update_of_default_system_values_units
-  BEFORE UPDATE ON ingredients
+  BEFORE UPDATE ON units
   FOR EACH ROW
   EXECUTE FUNCTION prevent_update_of_default_system_values_function_units();
 -- +goose StatementEnd

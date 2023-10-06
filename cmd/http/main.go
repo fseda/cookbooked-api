@@ -24,7 +24,7 @@ func main() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	if os.Getenv("GO_ENV") != "production" || os.Getenv("GO_ENV") != "deploy" {
+	if os.Getenv("GO_ENV") != "production" && os.Getenv("GO_ENV") != "deploy" {
 		fmt.Println("i'm in development mode")
 		err := godotenv.Load()
 		if err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/fseda/cookbooked-api/internal/infra/config"
@@ -23,14 +24,14 @@ func main() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	
-	if os.Getenv("GO_ENV") != "production" || os.Getenv("GO_ENV") != "deploy"{
+	if os.Getenv("GO_ENV") != "production" || os.Getenv("GO_ENV") != "deploy" {
+		fmt.Println("i'm in development mode")
 		err := godotenv.Load()
 		if err != nil {
 			log.Warn(err)
 		}
 	}
-	
+
 	// If not able to get env, app logs Fatal error
 	env := config.NewConfig()
 

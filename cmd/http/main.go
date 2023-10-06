@@ -23,11 +23,15 @@ func main() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	// If not able to get env, app logs Fatal error
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Warn(err)
+	
+	if os.Getenv("GO_ENV") != "production" || os.Getenv("GO_ENV") != "deploy"{
+		err := godotenv.Load()
+		if err != nil {
+			log.Warn(err)
+		}
 	}
+	
+	// If not able to get env, app logs Fatal error
 	env := config.NewConfig()
 
 	cleanup, err := run(env)

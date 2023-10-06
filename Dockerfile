@@ -17,7 +17,7 @@ FROM scratch
 
 COPY --from=base ["build/http-server", "/http-server"]
 
-ENV GO_ENV=production
+ENV GO_ENV=deploy
 
 ARG PGHOST
 ARG PGPORT

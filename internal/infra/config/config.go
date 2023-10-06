@@ -30,21 +30,23 @@ func NewConfig() *Config {
 			Name     string
 			Url      string
 		}{
-			Host:     env.GetEnvOrDie("PGHOST"),
-			Port:     env.GetEnvOrDie("PGPORT"),
-			User:     env.GetEnvOrDie("PGUSER"),
-			Password: env.GetEnvOrDie("PGPASSWORD"),
-			Name:     env.GetEnvOrDie("PGDATABASE"),
-			Url:      env.GetEnvOrDie("DATABASE_URL"),
+			Host:     env.GetEnv("PGHOST"),
+			Port:     env.GetEnv("PGPORT"),
+			User:     env.GetEnv("PGUSER"),
+			Password: env.GetEnv("PGPASSWORD"),
+			Name:     env.GetEnv("PGDATABASE"),
+			Url:      env.GetEnv("DATABASE_URL"),
 		},
 		Http: struct {
 			ServerPort   string
 			JWTSecretKey []byte
 		}{
-			ServerPort:   env.GetEnvOrDie("PORT"),
-			JWTSecretKey: []byte(env.GetEnvOrDie("JWT_SECRET_KEY")),
+			ServerPort:   env.GetEnv("SERVER_PORT"),
+			JWTSecretKey: []byte(env.GetEnv("JWT_SECRET_KEY")),
 		},
 	}
+
+	env.AllEnvsOrDie()
 
 	log.Info("Config loaded")
 

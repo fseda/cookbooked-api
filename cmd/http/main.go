@@ -26,7 +26,7 @@ func main() {
 	// If not able to get env, app logs Fatal error
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Warn("Could not load environment variables")
+		log.Warn(err)
 	}
 	env := config.NewConfig()
 
@@ -49,7 +49,7 @@ func run(env *config.Config) (func(), error) {
 	}
 
 	go func() {
-		app.Listen("0.0.0.0:" + env.Http.Port)
+		app.Listen("0.0.0.0:" + env.Http.ServerPort)
 	}()
 
 	return func() {

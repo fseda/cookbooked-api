@@ -6,13 +6,24 @@ import (
 	"os"
 )
 
-func GetEnvOrDie(key string) string {
+var missingEnv = make([]string, 0)
+
+func GetEnv(key string) string {
 	value := os.Getenv(key)
-	
+
 	if value == "" {
-		err := fmt.Errorf("missing environment variable %s", key)
-		log.Fatal(err)
+		errMsg := fmt.Sprintf("missing environment variable %s", key)
+		missingEnv = append(missingEnv, errMsg)
 	}
 
 	return value
+}
+
+func AllEnvsOrDie() {
+	if len(missingEnv) > 0 {
+		for _, e := range missingEnv {
+			log.Println(e)
+		}
+		log.Fatal("Environment variable(s) missing!")
+	}
 }

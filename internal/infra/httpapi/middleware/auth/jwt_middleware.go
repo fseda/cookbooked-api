@@ -28,7 +28,7 @@ func JWTAuthMiddleware(secretKey []byte) fiber.Handler {
 			return httpstatus.UnauthorizedError(globalerrors.AuthInvalidToken.Error())
 		}
 
-		c.Locals("claims", claims)
+		c.Locals("user", claims)
 
 		return c.Next()
 	}

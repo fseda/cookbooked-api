@@ -42,6 +42,10 @@ func UnauthorizedError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusUnauthorized, Message: msg}
 }
 
+func ForbiddenError(msg string) CustomError {
+	return CustomError{Code: fiber.StatusForbidden, Message: msg}
+}
+
 func MethodNotAllowedError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusMethodNotAllowed, Message: msg}
 }

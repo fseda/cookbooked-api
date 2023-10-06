@@ -17,7 +17,7 @@ type AuthService interface {
 
 type authService struct {
 	repository repositories.UserRepository
-	env *config.Config
+	env        *config.Config
 }
 
 func NewAuthService(repository repositories.UserRepository, env *config.Config) AuthService {
@@ -51,7 +51,6 @@ func (as *authService) Login(username, password string) (string, error) {
 
 	return token, nil
 }
-
 
 func (as *authService) Create(username, email, password string) (*models.User, error) {
 

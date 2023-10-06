@@ -71,16 +71,12 @@ func (a *authController) Login(c *fiber.Ctx) error {
 }
 
 func (a *authController) Profile(c *fiber.Ctx) error {
-	claims := c.Locals("claims").(*jwtutil.CustomClaims)
-
-	userID := claims.UserID
-	username := claims.Username
-	role := claims.Role
+	user := c.Locals("user").(*jwtutil.CustomClaims)
 
 	return c.Status(fiber.StatusOK).JSON(userProfileResponse{
-		UserID:   userID,
-		Username: username,
-		Role:     role,
+		UserID:   user.UserID,
+		Username: user.Username,
+		Role:     user.Role,
 	})
 }
 

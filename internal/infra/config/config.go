@@ -43,7 +43,7 @@ func NewConfig() *Config {
 		},
 	}
 
-	log.Infow("Config loaded")
+	log.Info("Config loaded")
 
 	return cfg
 }

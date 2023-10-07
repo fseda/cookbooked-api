@@ -54,13 +54,13 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 }
 
 func CloseDB(db *gorm.DB) error {
-	
+
 	sqlDB, _ := db.DB()
 	err := sqlDB.Close()
 	if err != nil {
 		return err
 	}
-	
+
 	log.Info("Database connection closed")
 	return nil
 }

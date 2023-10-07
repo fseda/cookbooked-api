@@ -44,7 +44,7 @@ func NewConfig() *Config {
 			ServerPort   string
 			JWTSecretKey []byte
 		}{
-			ServerPort:   env.GetEnv("SERVER_PORT"),
+			ServerPort:   env.GetEnv("PORT"),
 			JWTSecretKey: []byte(env.GetEnv("JWT_SECRET_KEY")),
 		},
 	}

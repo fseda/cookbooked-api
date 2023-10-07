@@ -1,9 +1,19 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TYPE unit_type AS ENUM ('weight', 'volume', 'temperature');
-ALTER TABLE units ADD COLUMN type unit_type;
-CREATE TYPE unit_system AS ENUM ('metric', 'imperial');
-ALTER TABLE units ADD COLUMN system unit_system;
+DO $$ BEGIN
+  CREATE TYPE unit_type AS ENUM ('weight', 'volume', 'temperature');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE unit_system AS ENUM ('metric', 'imperial');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+ALTER TABLE units ADD COLUMN IF NOT EXISTS type unit_type;
+ALTER TABLE units ADD COLUMN IF NOT EXISTS system unit_system;
 
 INSERT INTO units (name, symbol, is_system_unit, user_id, type, system)
 VALUES
@@ -30,7 +40,7 @@ VALUES
 DELETE FROM units 
 WHERE name IN 
 ('milliliter', 'liter', 'deciliter', 'teaspoon', 'tablespoon', 'fluid ounce', 'pint', 'quart', 'gallon', 'miligram', 'gram', 'kilogram', 'pound', 'ounce', 'celsius', 'farenheit') 
-AND is_system_tag = true;
+AND is_system_unit = true;
 
 ALTER TABLE units DROP COLUMN IF EXISTS "type";
 ALTER TABLE units DROP COLUMN IF EXISTS "system";

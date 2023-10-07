@@ -1,8 +1,11 @@
 package config
 
 import (
+	"os"
+
 	"github.com/fseda/cookbooked-api/pkg/env"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -51,4 +54,17 @@ func NewConfig() *Config {
 	log.Info("Config loaded")
 
 	return cfg
+}
+
+func LoadDevEnvironment() {
+	if isDevelopment() {
+		if err := godotenv.Load(); err != nil {
+			log.Warn(err)
+		}
+	}
+}
+
+func isDevelopment() bool {
+	env := os.Getenv("GO_ENV")
+	return env != "production" && env != "deploy"
 }

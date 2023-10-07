@@ -3,9 +3,9 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/fseda/cookbooked-api/internal/infra/config"
+	"github.com/gofiber/fiber/v2/log"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
@@ -54,6 +54,13 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 }
 
 func CloseDB(db *gorm.DB) error {
+	
 	sqlDB, _ := db.DB()
-	return sqlDB.Close()
+	err := sqlDB.Close()
+	if err != nil {
+		return err
+	}
+	
+	log.Info("Database connection closed")
+	return nil
 }

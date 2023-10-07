@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func addUserRoutes(app *fiber.App, db *gorm.DB) {
+func loadUserRoutes(app *fiber.App, db *gorm.DB) {
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository)
 	userController := controllers.NewUserController(userService)

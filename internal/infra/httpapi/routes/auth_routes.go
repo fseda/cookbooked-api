@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func addAuthRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
+func loadAuthRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	userRepository := repositories.NewUserRepository(db)
 	authService := services.NewAuthService(userRepository, env)
 	authController := controllers.NewAuthController(authService)
@@ -22,7 +22,7 @@ func addAuthRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 
 	auth.Get(
 		"/profile",
-	 	middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
+		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
 		authController.Profile,
 	)
 }

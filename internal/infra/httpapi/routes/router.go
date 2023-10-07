@@ -2,9 +2,15 @@ package routes
 
 import (
 	"github.com/fseda/cookbooked-api/internal/infra/config"
+	"github.com/gofiber/fiber/v2"
 )
 
-func AddRoutes(ctx *config.AppContext) {
-	addUserRoutes(ctx.App, ctx.DB)
-	addAuthRoutes(ctx.App, ctx.DB, ctx.Env)
+func LoadRoutes(ctx *config.AppContext) {
+	ctx.App.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendString("Healthy!")
+	})
+
+	// app.Get("/swagger", swagger.HandlerDefault)
+	loadUserRoutes(ctx.App, ctx.DB)
+	loadAuthRoutes(ctx.App, ctx.DB, ctx.Env)
 }

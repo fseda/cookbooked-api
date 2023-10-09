@@ -6,6 +6,7 @@ import (
 
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
+	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -13,6 +14,7 @@ import (
 type UserController interface {
 	FindOne(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
+	Profile(c *fiber.Ctx) error
 }
 
 type userController struct {
@@ -21,6 +23,22 @@ type userController struct {
 
 func NewUserController(service services.UserService) UserController {
 	return &userController{service}
+}
+
+type userProfileResponse struct {
+	UserID   uint   `json:"user_id"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
+}
+
+func (u *userController) Profile(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwtutil.CustomClaims)
+
+	return c.Status(fiber.StatusOK).JSON(userProfileResponse{
+		UserID:   user.UserID,
+		Username: user.Username,
+		Role:     user.Role,
+	})
 }
 
 func (u *userController) FindOne(c *fiber.Ctx) error {

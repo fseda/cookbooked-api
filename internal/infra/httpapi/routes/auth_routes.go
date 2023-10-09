@@ -5,7 +5,6 @@ import (
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/config"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/controllers"
-	middlewares "github.com/fseda/cookbooked-api/internal/infra/httpapi/middleware/auth"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -19,10 +18,4 @@ func loadAuthRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 
 	auth.Post("/login", authController.Login)
 	auth.Post("/signup", authController.RegisterUser)
-
-	auth.Get(
-		"/profile",
-		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
-		authController.Profile,
-	)
 }

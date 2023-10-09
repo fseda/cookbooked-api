@@ -10,14 +10,12 @@ import (
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
-	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
 	"github.com/gofiber/fiber/v2"
 )
 
 type AuthController interface {
 	RegisterUser(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
-	Profile(c *fiber.Ctx) error
 }
 
 type authController struct {
@@ -35,12 +33,6 @@ type loginUserRequest struct {
 
 type loginUserResponse struct {
 	Token string `json:"token"`
-}
-
-type userProfileResponse struct {
-	UserID   uint   `json:"user_id"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
 }
 
 func (a *authController) Login(c *fiber.Ctx) error {
@@ -67,16 +59,6 @@ func (a *authController) Login(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(loginUserResponse{
 		token,
-	})
-}
-
-func (a *authController) Profile(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwtutil.CustomClaims)
-
-	return c.Status(fiber.StatusOK).JSON(userProfileResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Role:     user.Role,
 	})
 }
 

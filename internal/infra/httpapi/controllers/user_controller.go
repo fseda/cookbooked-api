@@ -28,16 +28,27 @@ func NewUserController(service services.UserService) UserController {
 type userProfileResponse struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
+	Email    string `json:"email"`
 	Role     string `json:"role"`
 }
 
 func (u *userController) Profile(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwtutil.CustomClaims)
+	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
+
+	user, err := u.service.FindByID(userClaims.UserID)
+	if err == gorm.ErrRecordNotFound {
+		msg := fmt.Sprintf("User with ID %d not found", userClaims.UserID)
+		return httpstatus.NotFoundError(msg)
+	}
+	if err != nil {
+		return httpstatus.InternalServerError(err.Error())
+	}
 
 	return c.Status(fiber.StatusOK).JSON(userProfileResponse{
-		UserID:   user.UserID,
+		UserID:   userClaims.UserID,
 		Username: user.Username,
-		Role:     user.Role,
+		Email:    user.Email,
+		Role:     userClaims.Role,
 	})
 }
 

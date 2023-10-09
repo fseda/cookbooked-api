@@ -8,12 +8,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// var secretKey = []byte("asdfasdfasdf")
-
 type CustomClaims struct {
 	jwt.RegisteredClaims
 	UserID    uint   `json:"user_id"`
-	Username  string `json:"username"`
 	Role      string `json:"role"`
 	ExpiresAt int64  `json:"exp,omitempty"`
 }
@@ -21,7 +18,6 @@ type CustomClaims struct {
 func GenerateToken(user *models.User, secretKey []byte) (string, error) {
 	claims := &CustomClaims{
 		UserID:    user.ID,
-		Username:  user.Username,
 		Role:      string(user.Role),
 		ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
 	}

@@ -6,7 +6,6 @@ import (
 
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
-	modelvalidation "github.com/fseda/cookbooked-api/internal/domain/models/validation"
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
@@ -80,10 +79,6 @@ func (a *authController) RegisterUser(c *fiber.Ctx) error {
 
 	if errMsgs := validation.MyValidator.CreateErrorResponse(req); len(errMsgs) > 0 {
 		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
-	}
-
-	if modelvalidation.IsEmailLike(req.Username) {
-		return httpstatus.BadRequestError(globalerrors.UserInvalidUsername.Error())
 	}
 
 	user, err := a.service.Create(req.Username, req.Email, req.Password)

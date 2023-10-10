@@ -12,6 +12,7 @@ func LoadRoutes(ctx *config.AppContext) {
 	loadHealthCheck(ctx.App)
 	loadUserRoutes(ctx.App, ctx.DB, ctx.Env)
 	loadAuthRoutes(ctx.App, ctx.DB, ctx.Env)
+	loadRecipeRoutes(ctx.App, ctx.DB, ctx.Env)
 	
 	ctx.App.All("*", func(c *fiber.Ctx) error {
 		return httpstatus.NotFoundError("Not Found")

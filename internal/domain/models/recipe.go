@@ -7,12 +7,12 @@ import (
 type Recipe struct {
 	gorm.Model
 	Title             string             `gorm:"column:title; size:255; not null; uniqueIndex:unique_user_id_title;" json:"title"`
-	Description       string             `gorm:"column:description; not null;" json:"description"`
-	Body              string             `gorm:"column:body; not null;" json:"body"`
+	Description       string             `gorm:"column:description; type:text; not null;" json:"description"`
+	Body              string             `gorm:"column:body; type:text; not null;" json:"body"`
 	Link              string             `gorm:"column:link; size:500; not null;" json:"link"`
-	UserID            *uint               `gorm:"column:user_id; uniqueIndex:unique_user_id_title;" json:"user_id"`
-	RecipeTags        []RecipeTag        `gorm:"constraint:OnDelete:CASCADE"`
-	RecipeIngredients []RecipeIngredient `gorm:"constraint:OnDelete:CASCADE"`
+	UserID            *uint              `gorm:"column:user_id; uniqueIndex:unique_user_id_title;" json:"user_id"`
+	RecipeTags        []*RecipeTag        `gorm:"constraint:OnDelete:CASCADE"`
+	RecipeIngredients []*RecipeIngredient `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type RecipeTag struct {

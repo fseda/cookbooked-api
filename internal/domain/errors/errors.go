@@ -13,5 +13,8 @@ var (
 	AuthMissingAuthHeader       = errors.New("missing Authorization header")
 	AuthInvalidAuthHeaderFormat = errors.New("Invalid Authorization Header Format")
 
+	RecipeTitleOfUserExists = errors.New("recipe title already exists for user")
+
 	GlobalInternalServerError = errors.New("internal server error")
+	GlobalUnableToParseBody	= errors.New("unable to parse body")
 )

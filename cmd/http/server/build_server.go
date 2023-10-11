@@ -21,6 +21,8 @@ func BuildServer(env *config.Config) (*fiber.App, func(), error) {
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: httpstatus.ErrorHandler,
+		AppName:      "Cookbooked API",
+		DisableStartupMessage: true,
 	})
 
 	loadGlobalMiddleware(app)
@@ -51,4 +53,6 @@ func loadGlobalMiddleware(app *fiber.App) {
 		log.Infof("🚀 Server listening on %v://%v:%v", scheme, listenData.Host, listenData.Port)
 		return nil
 	})
+
+	log.Info("🛡️  Global middleware loaded")
 }

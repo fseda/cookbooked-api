@@ -51,7 +51,7 @@ func NewConfig() *Config {
 
 	env.AllEnvsOrDie()
 
-	log.Info("Config loaded")
+	log.Info("🔧 Config loaded")
 
 	return cfg
 }

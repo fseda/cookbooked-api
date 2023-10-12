@@ -29,7 +29,7 @@ func (ir *unitRepository) FindByID(id uint) (*models.Unit, error) {
 
 // ids must be unique
 func (ir *unitRepository) ExistsAllIn(ids []uint) (bool, error) {
-	for id := range ids {
+	for _, id := range ids {
 		err := ir.db.First(&models.Unit{}, id).Error
 		if err == nil {
 			continue

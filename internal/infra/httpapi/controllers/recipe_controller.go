@@ -16,7 +16,7 @@ import (
 type RecipeController interface {
 	CreateRecipe(c *fiber.Ctx) error
 	GetRecipesByUserID(c *fiber.Ctx) error
-	GetRecipesByTitleSubstring(c *fiber.Ctx) error
+	GetUserRecipesTitleBySubstring(c *fiber.Ctx) error
 }
 
 type recipeController struct {
@@ -91,15 +91,16 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(newRecipe)
 }
 
-func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error { 
-	// userClaims := c.Locals("user").(*jwtutil.CustomClaims)
-	// userID := userClaims.UserID
-	
-	// recipes, err := rc.recipeService.FindManyByUserID(userID)
-	// if err != nil {
-	// 	return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-	// }
-	return nil
+func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
+	userID := userClaims.UserID
+
+	recipes, err := rc.recipeService.FindRecipesByUserID(userID)
+	if err != nil {
+		return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(recipes)
 }
 
-func (rc *recipeController) GetRecipesByTitleSubstring(c *fiber.Ctx) error { return nil }
+func (rc *recipeController) GetUserRecipesTitleBySubstring(c *fiber.Ctx) error { return nil }

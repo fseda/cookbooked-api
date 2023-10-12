@@ -30,7 +30,7 @@ func (ir *ingredientRepository) FindByID(id uint) (*models.Ingredient, error) {
 // ids must be unique
 func (ir *ingredientRepository) ExistsAllIn(ids []uint) (bool, error) {
 	var count int64
-	res := ir.db.Where("id IN ?", []int{1, 298787, 3, 4}).Find(&models.Ingredient{}).Count(&count)
+	res := ir.db.Where("id IN ?", ids).Find(&models.Ingredient{}).Count(&count)
 	if res.Error != nil {
 		return false, res.Error
 	}

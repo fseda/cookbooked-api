@@ -7,11 +7,11 @@ import (
 )
 
 type RecipeService interface {
-	Create(
+	CreateRecipe(
 		title string,
 		description string,
 		body string,
-		recipeIngredients []*RecipeIngredientInput,
+		recipeIngredients []*models.RecipeIngredient,
 		tagsIDs []uint,
 		link string,
 		userID uint,
@@ -21,31 +21,35 @@ type RecipeService interface {
 }
 
 type recipeService struct {
-	repository repositories.RecipeRepository
+	recipeRepository     repositories.RecipeRepository
+	ingredientRepository repositories.IngredientRepository
+	unitRepository       repositories.UnitRepository
 }
 
-func NewRecipeService(repository repositories.RecipeRepository) RecipeService {
-	return &recipeService{repository}
+func NewRecipeService(
+	recipeRepository repositories.RecipeRepository,
+	ingredientRepository repositories.IngredientRepository,
+	unitRepository repositories.UnitRepository,
+) RecipeService {
+	return &recipeService{
+		recipeRepository,
+		ingredientRepository,
+		unitRepository,
+	}
 }
 
-type RecipeIngredientInput struct {
-	IngredientID uint
-	UnitID       uint
-	Quantity     float32
-}
-
-func (rs *recipeService) Create(
+func (rs *recipeService) CreateRecipe(
 	title string,
 	description string,
 	body string,
-	recipeIngredients []*RecipeIngredientInput, 
+	recipeIngredients []*models.RecipeIngredient,
 	tagsIDs []uint,
 	link string,
 	userID uint,
 ) (*models.Recipe, error) {
 	var err error
 
-	isRecipeTitleTakenByUser, err := rs.repository.IsRecipeTitleTakenByUser(userID, title)
+	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, title)
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
@@ -53,40 +57,54 @@ func (rs *recipeService) Create(
 		return nil, globalerrors.RecipeTitleOfUserExists
 	}
 
-	recipeIngredientsModel := make([]*models.RecipeIngredient, len(recipeIngredients))
-	for i, recipeIngredient := range recipeIngredients {
-		// TODO: check if ingredient exists
-		// TODO: check if unit exists
-		// TODO: check if quantity is valid
-		// TODO: check for duplicate ingredients
+	ingredientsIDs, unitsIDs := rs.getIDs(recipeIngredients)
 
-		recipeIngredientsModel[i] = &models.RecipeIngredient{
-			IngredientID: recipeIngredient.IngredientID,
-			UnitID:       recipeIngredient.UnitID,
-			Quantity:     recipeIngredient.Quantity,
-		}
+	// check if ingredients are unique
+	if !rs.ingredientsAreUnique(ingredientsIDs) {
+		return nil, globalerrors.RecipeDuplicateIngredient
 	}
 
-	recipeTagsModel := make([]*models.RecipeTag, len(tagsIDs))
-	for i, tagID := range tagsIDs {
-		// TODO: check if tag exists
-		// TODO: check for duplicate tags
-
-		recipeTagsModel[i] = &models.RecipeTag{
-			TagID: tagID,
-		}
+	exists, err := rs.ingredientRepository.ExistsAllIn(ingredientsIDs)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
 	}
-	
+	if !exists {
+		return nil, globalerrors.RecipeInvalidIngredient
+	}
+	exists, err = rs.unitRepository.ExistsAllIn(unitsIDs)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
+	}
+	if !exists {
+		return nil, globalerrors.RecipeInvalidUnit
+	}
+
+	// check if quantity is valid
+	if !rs.quantitiesAreValid(recipeIngredients) {
+		return nil, globalerrors.RecipeInvalidQuantity
+	}
+
+	// region TODO tags
+	// recipeTagsModel := make([]*models.RecipeTag, len(tagsIDs))
+	// for i, tagID := range tagsIDs {
+	// 	// TODO: check if tag exists
+	// 	// TODO: check for duplicate tags
+	// 	recipeTagsModel[i] = &models.RecipeTag{
+	// 		TagID: tagID,
+	// 	}
+	// }
+	// endregion
+
 	recipe := &models.Recipe{
-		Title:       title,
-		Description: description,
-		Body:        body,
-		Link:        link,
-		UserID:      &userID,
-		RecipeIngredients: recipeIngredientsModel,
-		RecipeTags: recipeTagsModel,
+		Title:             title,
+		Description:       description,
+		Body:              body,
+		Link:              link,
+		UserID:            &userID,
+		RecipeIngredients: recipeIngredients,
+		// RecipeTags:        nil,
 	}
-	err = rs.repository.Create(recipe)
+	err = rs.recipeRepository.Create(recipe)
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
@@ -94,7 +112,7 @@ func (rs *recipeService) Create(
 }
 
 func (rs *recipeService) FindManyByUserID(userID uint) ([]models.Recipe, error) {
-	recipes, err := rs.repository.FindAllUserRecipes(userID)
+	recipes, err := rs.recipeRepository.FindAllUserRecipes(userID)
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
@@ -103,10 +121,40 @@ func (rs *recipeService) FindManyByUserID(userID uint) ([]models.Recipe, error) 
 }
 
 func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error) {
-	recipes, err := rs.repository.FindUserRecipesByTitleSubstring(userID, titleSubstring)
+	recipes, err := rs.recipeRepository.FindUserRecipesByTitleSubstring(userID, titleSubstring)
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
 
 	return recipes, nil
+}
+
+func (rs *recipeService) getIDs(recipeIngredients []*models.RecipeIngredient) (ingredientsIDs []uint, unitsIDs []uint) {
+	ingredientsIDs = make([]uint, len(recipeIngredients))
+	unitsIDs = make([]uint, len(recipeIngredients))
+	for i, recipeIngredient := range recipeIngredients {
+		ingredientsIDs[i] = recipeIngredient.IngredientID
+		unitsIDs[i] = recipeIngredient.UnitID
+	}
+	return ingredientsIDs, unitsIDs
+}
+
+func (rs *recipeService) quantitiesAreValid(recipeIngredients []*models.RecipeIngredient) bool {
+	for _, recipeIngredient := range recipeIngredients {
+		if recipeIngredient.Quantity <= 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func (rs *recipeService) ingredientsAreUnique(ingredientsIDs []uint) bool {
+	uniqueIngredientsIDs := make(map[uint]bool)
+	for _, ingredientID := range ingredientsIDs {
+		if uniqueIngredientsIDs[ingredientID] {
+			return false
+		}
+		uniqueIngredientsIDs[ingredientID] = true
+	}
+	return true
 }

@@ -37,6 +37,8 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 		return nil, err
 	}
 
+	log.Info("💾 Database connection established")
+
 	// err = db.AutoMigrate(
 	// 	models.User{},
 	// 	models.Ingredient{},

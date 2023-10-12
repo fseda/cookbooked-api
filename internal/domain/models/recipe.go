@@ -17,7 +17,6 @@ type Recipe struct {
 
 type RecipeTag struct {
 	gorm.Model
-	ID       uint   `gorm:"column:id; primaryKey; autoIncrement; not null;" json:"id"`
 	RecipeID uint   `gorm:"column:recipe_id; uniqueIndex:recipe_tags_must_be_unique;" json:"recipe_id"`
 	Recipe   Recipe `gorm:"foreignKey:RecipeID; references:ID"`
 	TagID    uint   `gorm:"column:tag_id; uniqueIndex:recipe_tags_must_be_unique;" json:"tag_id"`
@@ -26,10 +25,9 @@ type RecipeTag struct {
 
 type RecipeIngredient struct {
 	gorm.Model
-	ID           uint       `gorm:"column:id; primaryKey; autoIncrement; not null;" json:"id"`
 	Quantity     float32    `gorm:"column:quantity; not null;" json:"quantity"`
 	RecipeID     uint       `gorm:"column:recipe_id; uniqueIndex:recipe_ingredients_must_be_unique;" json:"recipe_id"`
-	Recipe       Recipe     `gorm:"foreignKey:RecipeID; references:ID"`
+	// Recipe       Recipe     `gorm:"foreignKey:RecipeID; references:ID"`
 	IngredientID uint       `gorm:"column:ingredient_id; uniqueIndex:recipe_ingredients_must_be_unique;" json:"ingredient_id"`
 	Ingredient   Ingredient `gorm:"foreignKey:IngredientID; references:ID"`
 	UnitID       uint       `gorm:"column:unit_id;" json:"unit_id"`

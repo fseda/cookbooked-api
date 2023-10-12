@@ -17,7 +17,7 @@ type recipeIngredientRepository struct {
 	db *gorm.DB
 }
 
-func NewIngredientRepository(db *gorm.DB) RecipeIngredientRepository {
+func NewRecipeIngredientRepository(db *gorm.DB) RecipeIngredientRepository {
 	return &recipeIngredientRepository{db}
 }
 

@@ -12,6 +12,7 @@ func NewUnitRepository(db *gorm.DB) UnitRepository {
 type UnitRepository interface {
 	FindByID(id uint) (*models.Unit, error)
 	ExistsAllIn(ids []uint) (bool, error)
+	InvalidIDs(ids []uint) (invalidIDs []uint, err error)
 }
 
 type unitRepository struct {
@@ -42,4 +43,20 @@ func (ir *unitRepository) ExistsAllIn(ids []uint) (bool, error) {
 	}
 	
 	return true, nil
+}
+
+func (ir *unitRepository) InvalidIDs(ids []uint) (invalidIDs []uint, err error) {
+	for _, id := range ids {
+		err := ir.db.First(&models.Unit{}, id).Error
+		if err == nil {
+			continue
+		} 
+		if err == gorm.ErrRecordNotFound {
+			invalidIDs = append(invalidIDs, id)
+		} else {
+			return nil, err
+		}
+	}
+	
+	return invalidIDs, nil
 }

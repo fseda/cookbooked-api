@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
@@ -71,12 +73,12 @@ func (rs *recipeService) CreateRecipe(
 	if !exists {
 		return nil, globalerrors.RecipeInvalidIngredient
 	}
-	exists, err = rs.unitRepository.ExistsAllIn(unitsIDs)
+	invalidIDs, err := rs.unitRepository.InvalidIDs(unitsIDs)
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
-	if !exists {
-		return nil, globalerrors.RecipeInvalidUnit
+	if invalidIDs != nil {
+		return nil, fmt.Errorf("%w (%v)", globalerrors.RecipeInvalidUnit, invalidIDs)
 	}
 
 	// check if quantity is valid

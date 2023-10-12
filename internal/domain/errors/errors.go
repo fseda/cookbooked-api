@@ -17,9 +17,9 @@ var (
 	RecipeDuplicateIngredient = errors.New("recipe contains duplicate ingredients")
 	RecipeDuplicateTag        = errors.New("recipe contains duplicate tags")
 	RecipeInvalidIngredient   = errors.New("recipe contains invalid ingredient(s)")
-	RecipeInvalidUnit         = errors.New("recipe contains invalid unit")
-	RecipeInvalidQuantity     = errors.New("recipe contains invalid quantity")
-	RecipeInvalidTag          = errors.New("recipe contains invalid tag")
+	RecipeInvalidUnit         = errors.New("recipe contains invalid unit(s)")
+	RecipeInvalidQuantity     = errors.New("recipe contains invalid quantity(ies)")
+	RecipeInvalidTag          = errors.New("recipe contains invalid tag(s)")
 	RecipeInvalidTitle        = errors.New("recipe contains invalid title")
 
 	GlobalInternalServerError = errors.New("internal server error")

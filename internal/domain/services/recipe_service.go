@@ -118,7 +118,6 @@ func (rs *recipeService) FindRecipesByUserID(userID uint) ([]models.Recipe, erro
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
-
 	return recipes, nil
 }
 

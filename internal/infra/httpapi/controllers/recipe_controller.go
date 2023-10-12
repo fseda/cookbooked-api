@@ -42,6 +42,27 @@ type createRecipeRequest struct {
 	TagIDs            []uint                     `json:"tag_ids" validate:"dive,number=true"`
 }
 
+type getRecipeDetailsResponse struct {
+	ID                string                     `json:"id"`
+	Title             string                     `json:"title"`
+	Description       string                     `json:"description"`
+	Body              string                     `json:"body"`
+	Link              string                     `json:"link"`
+	RecipeIngredients []*models.RecipeIngredient `json:"recipe_ingredients"`
+	RecipeTags        []*models.RecipeTag        `json:"recipe_tags"`
+}
+
+type getRecipeResponse struct {
+	ID          uint                `json:"id"`
+	Title       string              `json:"title"`
+	Description string              `json:"description"`
+	Tags        []*models.RecipeTag `json:"tags"`
+}
+
+type getAllRecipesResponse struct {
+	Recipes []*getRecipeResponse `json:"recipes"`
+}
+
 func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
@@ -100,7 +121,18 @@ func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error {
 		return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(recipes)
+	recipesResponse := make([]*getRecipeResponse, len(recipes))
+	for i, recipe := range recipes {
+		recipesResponse[i] = &getRecipeResponse{
+			ID:          recipe.ID,
+			Title:       recipe.Title,
+			Description: recipe.Description,
+			Tags:        recipe.RecipeTags,
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(recipesResponse)
 }
 
+// TODO: Implement this
 func (rc *recipeController) GetUserRecipesTitleBySubstring(c *fiber.Ctx) error { return nil }

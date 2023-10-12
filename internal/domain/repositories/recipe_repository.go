@@ -30,12 +30,14 @@ func (r *recipeRepository) Create(recipe *models.Recipe) error {
 func (r *recipeRepository) FindAllFromUser(userID uint) ([]models.Recipe, error) {
 	var recipes []models.Recipe
 	err := r.db.
-		Preload("RecipeIngredients.Ingredient").
-		Preload("RecipeIngredients.Unit").
+		Preload("RecipeTags").
 		Where("user_id = ?", userID).
 		Find(&recipes).
 		Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return recipes, nil

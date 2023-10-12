@@ -14,6 +14,7 @@ var (
 	AuthInvalidAuthHeaderFormat = errors.New("Invalid authorization header Format")
 
 	RecipeTitleOfUserExists   = errors.New("recipe title already exists for user")
+	RecipeNotFound            = errors.New("recipe not found")
 	RecipeDuplicateIngredient = errors.New("recipe contains duplicate ingredients")
 	RecipeDuplicateTag        = errors.New("recipe contains duplicate tags")
 	RecipeInvalidIngredient   = errors.New("recipe contains invalid ingredient(s)")

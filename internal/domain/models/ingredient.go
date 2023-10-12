@@ -10,7 +10,7 @@ type Ingredient struct {
 	UserID             *uint               `gorm:"column:user_id; uniqueIndex:user_ingredients_must_be_unique;" json:"user_id"`
 	CategoryID         *uint               `gorm:"column:category_id; not null;" json:"category_id"`
 	Category           IngredientsCategory `gorm:"foreignKey:CategoryID; references:ID"`
-	RecipeIngredients  []RecipeIngredient  `gorm:"constraint:OnDelete:RESTRICT"`
+	RecipeIngredients  []RecipeIngredient  `gorm:"constraint:OnDelete:RESTRICT" json:"omitempty"`
 }
 
 type IngredientsCategory struct {

@@ -3,12 +3,10 @@ package models
 import (
 	"database/sql/driver"
 	"fmt"
-
-	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
+	Base
 	Username     string       `gorm:"column:username; size:255; unique; not null;" json:"username"`
 	Email        string       `gorm:"column:email; size:255; unique; not null;" json:"email"`
 	PasswordHash string       `gorm:"column:password_hash; not null;" json:"-"`

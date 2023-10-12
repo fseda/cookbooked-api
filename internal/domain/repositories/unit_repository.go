@@ -27,14 +27,13 @@ func (ir *unitRepository) FindByID(id uint) (*models.Unit, error) {
 	return &unit, nil
 }
 
+// ids must be unique
 func (ir *unitRepository) ExistsAllIn(ids []uint) (bool, error) {
-	res := ir.db.Model(&models.Unit{}).Where("id IN ?", ids)
+	var count int64
+	res := ir.db.Where("id IN ?", []int{1, 298787, 3, 4}).Find(&models.Unit{}).Count(&count)
 	if res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			return false, nil
-		}
 		return false, res.Error
 	}
 
-	return true, nil	
+	return count == int64(len(ids)), nil	
 }

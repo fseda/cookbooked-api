@@ -27,15 +27,13 @@ func (ir *ingredientRepository) FindByID(id uint) (*models.Ingredient, error) {
 	return &ingredient, nil
 }
 
+// ids must be unique
 func (ir *ingredientRepository) ExistsAllIn(ids []uint) (bool, error) {
-	res := ir.db.Model(&models.Ingredient{}).Where("id IN ?", ids)
+	var count int64
+	res := ir.db.Where("id IN ?", []int{1, 298787, 3, 4}).Find(&models.Ingredient{}).Count(&count)
 	if res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			return false, nil
-		}
 		return false, res.Error
 	}
 
-	return true, nil	
+	return count == int64(len(ids)), nil
 }
-

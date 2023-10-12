@@ -82,17 +82,24 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, globalerrors.GlobalInternalServerError):
-			return httpstatus.InternalServerError(err.Error())
-		case errors.Is(err, globalerrors.RecipeTitleOfUserExists):
-			return httpstatus.BadRequestError(err.Error())
+			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
 		default:
-			return httpstatus.InternalServerError("Something went wrong. Please try again later.")
+			return httpstatus.BadRequestError(err.Error())
 		}
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(newRecipe)
 }
 
-func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error { return nil }
+func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error { 
+	// userClaims := c.Locals("user").(*jwtutil.CustomClaims)
+	// userID := userClaims.UserID
+	
+	// recipes, err := rc.recipeService.FindManyByUserID(userID)
+	// if err != nil {
+	// 	return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+	// }
+	return nil
+}
 
 func (rc *recipeController) GetRecipesByTitleSubstring(c *fiber.Ctx) error { return nil }

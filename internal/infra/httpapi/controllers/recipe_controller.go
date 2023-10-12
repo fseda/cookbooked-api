@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
@@ -16,6 +17,7 @@ import (
 type RecipeController interface {
 	CreateRecipe(c *fiber.Ctx) error
 	GetRecipesByUserID(c *fiber.Ctx) error
+	GetRecipeDetails(c *fiber.Ctx) error
 	GetUserRecipesTitleBySubstring(c *fiber.Ctx) error
 }
 
@@ -43,7 +45,7 @@ type createRecipeRequest struct {
 }
 
 type getRecipeDetailsResponse struct {
-	ID                string                     `json:"id"`
+	ID                uint                       `json:"id"`
 	Title             string                     `json:"title"`
 	Description       string                     `json:"description"`
 	Body              string                     `json:"body"`
@@ -132,6 +134,33 @@ func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(recipesResponse)
+}
+
+func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
+	claims := c.Locals("user").(*jwtutil.CustomClaims)
+	userID := claims.UserID
+
+	recipeID, err := strconv.ParseUint(c.Params("id"), 10, 64)
+	if err != nil {
+		return httpstatus.BadRequestError(globalerrors.GlobalInvalidID.Error())
+	}
+
+	recipe, err := rc.recipeService.FindUserRecipeByID(userID, uint(recipeID))
+	if err != nil {
+		return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+	}
+
+	recipeDetailsResponse := &getRecipeDetailsResponse{
+		ID:                recipe.ID,
+		Title:             recipe.Title,
+		Description:       recipe.Description,
+		Body:              recipe.Body,
+		Link:              recipe.Link,
+		RecipeIngredients: recipe.RecipeIngredients,
+		RecipeTags:        recipe.RecipeTags,
+	}
+
+	return c.Status(fiber.StatusOK).JSON(recipeDetailsResponse)
 }
 
 // TODO: Implement this

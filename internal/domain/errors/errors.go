@@ -25,4 +25,5 @@ var (
 
 	GlobalInternalServerError = errors.New("internal server error")
 	GlobalUnableToParseBody   = errors.New("unable to parse body")
+	GlobalInvalidID           = errors.New("invalid id. must be positive integer")
 )

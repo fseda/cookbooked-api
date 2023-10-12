@@ -19,6 +19,7 @@ type RecipeService interface {
 		userID uint,
 	) (*models.Recipe, error)
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
+	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
 	FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
 }
 
@@ -119,6 +120,17 @@ func (rs *recipeService) FindRecipesByUserID(userID uint) ([]models.Recipe, erro
 		return nil, globalerrors.GlobalInternalServerError
 	}
 	return recipes, nil
+}
+
+func (rs *recipeService) FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error) {
+	recipe, err := rs.recipeRepository.FindByID(recipeID)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
+	}
+	if recipe.UserID != nil && *recipe.UserID != userID {
+		return nil, globalerrors.RecipeNotFound
+	}
+	return &recipe, nil
 }
 
 func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error) {

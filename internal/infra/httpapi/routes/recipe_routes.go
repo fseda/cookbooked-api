@@ -20,5 +20,4 @@ func loadRecipeRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	recipeGroup := app.Group("/recipes")
 	recipeGroup.Post("/new", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), recipeController.CreateRecipe)
 	recipeGroup.Get("/mine", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), recipeController.GetRecipesByUserID)
-	// recipeGroup.Get("/me/search", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), recipeController.FindByTitleSubstring)
 }

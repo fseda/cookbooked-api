@@ -15,9 +15,20 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	userService := services.NewUserService(userRepository)
 	userController := controllers.NewUserController(userService)
 
-	userGroup := app.Group("/user")
-	// userGroup.Get("/:id", userController.FindOne)
-	// userGroup.Delete("/:id", userController.Delete)
+	recipeRepository := repositories.NewRecipeRepository(db)
+	ingredientRepository := repositories.NewIngredientRepository(db)
+	unitRepository := repositories.NewUnitRepository(db)
+	recipeService := services.NewRecipeService(recipeRepository, ingredientRepository, unitRepository)
+	recipeController := controllers.NewRecipeController(recipeService)
+
+	userGroup := app.Group("/users")
 
 	userGroup.Get("/me", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), userController.Profile)
+	userGroup.Get("/recipes", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), recipeController.GetRecipesByUserID)
+	userGroup.Get(
+		"/me/recipes/:id",
+		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
+
+		recipeController.GetRecipeDetails,
+	)
 }

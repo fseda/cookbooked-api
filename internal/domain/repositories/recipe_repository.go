@@ -9,7 +9,7 @@ import (
 
 type RecipeRepository interface {
 	Create(recipe *models.Recipe) error
-	FindAllUserRecipes(userID uint) ([]models.Recipe, error)
+	FindAllFromUser(userID uint) ([]models.Recipe, error)
 	FindRecipesByTitleSubstring(titleSubstring string) ([]models.Recipe, error)
 	FindUserRecipesByTitleSubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
 	IsRecipeTitleTakenByUser(id uint, title string) (bool, error)
@@ -27,9 +27,15 @@ func (r *recipeRepository) Create(recipe *models.Recipe) error {
 	return r.db.Create(recipe).Error
 }
 
-func (r *recipeRepository) FindAllUserRecipes(userID uint) ([]models.Recipe, error) {
+func (r *recipeRepository) FindAllFromUser(userID uint) ([]models.Recipe, error) {
 	var recipes []models.Recipe
-	if err := r.db.Where("user_id = ?", userID).Find(&recipes).Error; err != nil {
+	err := r.db.
+		Preload("RecipeIngredients.Ingredient").
+		Preload("RecipeIngredients.Unit").
+		Where("user_id = ?", userID).
+		Find(&recipes).
+		Error
+	if err != nil {
 		return nil, err
 	}
 	return recipes, nil

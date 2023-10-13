@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"strconv"
 	"strings"
 
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
@@ -140,10 +139,7 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := claims.UserID
 
-	recipeID, err := strconv.ParseUint(c.Params("id"), 10, 64)
-	if err != nil {
-		return httpstatus.BadRequestError(globalerrors.GlobalInvalidID.Error())
-	}
+	recipeID, _ := c.ParamsInt("id")
 
 	recipe, err := rc.recipeService.FindUserRecipeByID(userID, uint(recipeID))
 	if err != nil {

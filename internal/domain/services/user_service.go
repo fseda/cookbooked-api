@@ -24,7 +24,10 @@ func NewUserService(repository repositories.UserRepository) UserService {
 func (us *userService) FindByID(id uint) (*models.User, error) {
 	user, err := us.repository.FindOneById(id)
 	if err != nil {
-		return nil, err
+		return nil, globalerrors.GlobalInternalServerError
+	}
+	if user == nil {
+		return nil, globalerrors.UserNotFound
 	}
 	return user, nil
 }

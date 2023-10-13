@@ -1,16 +1,16 @@
 package middlewares
 
 import (
-	"strconv"
-
+	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
 	"github.com/gofiber/fiber/v2"
 )
 
 func ValidateID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if _, err := strconv.ParseUint(c.Params("id"), 10, 64); err != nil {
-			return httpstatus.BadRequestError("Invalid ID")
+		idInt, err := c.ParamsInt("id")
+		if err != nil || idInt <= 0{
+			return httpstatus.BadRequestError(globalerrors.GlobalInvalidID.Error())
 		}
 
 		return c.Next()

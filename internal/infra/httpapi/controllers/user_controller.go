@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
 	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
@@ -12,7 +13,7 @@ import (
 )
 
 type UserController interface {
-	FindOne(c *fiber.Ctx) error
+	GetOneByID(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
 	Profile(c *fiber.Ctx) error
 }
@@ -52,23 +53,18 @@ func (u *userController) Profile(c *fiber.Ctx) error {
 	})
 }
 
-func (u *userController) FindOne(c *fiber.Ctx) error {
-	idStr := c.Params("id")
-
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		return httpstatus.BadRequestError("Invalid id. Should be a positive integer.")
-	}
-
+func (u *userController) GetOneByID(c *fiber.Ctx) error {
+	id, _ := c.ParamsInt("id")
 	user, err := u.service.FindByID(uint(id))
-	if err == gorm.ErrRecordNotFound {
-		msg := fmt.Sprintf("User with ID %d not found", id)
-		return httpstatus.NotFoundError(msg)
-	}
 	if err != nil {
-		return httpstatus.InternalServerError(err.Error())
+		switch err {
+			case globalerrors.UserNotFound:
+				msg := fmt.Sprintf("User with ID %d not found", id)
+				return httpstatus.NotFoundError(msg)
+			default:
+				return httpstatus.InternalServerError(err.Error())
+		}
 	}
-
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 

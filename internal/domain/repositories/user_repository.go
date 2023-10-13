@@ -36,6 +36,9 @@ func (r *userRepository) FindOneById(id uint) (*models.User, error) {
 	var user models.User
 	err := r.db.Omit("PasswordHash").First(&user, id).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &user, nil

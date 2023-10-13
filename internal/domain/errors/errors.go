@@ -6,7 +6,8 @@ var (
 	UserEmailExists     = errors.New("email already exists")
 	UserUsernameExists  = errors.New("username already exists")
 	UserInvalidUsername = errors.New("invalid username")
-	UserCouldNotQuery   = errors.New("could not query")
+	UserInvalidEmail    = errors.New("invalid email")
+	UserNotFound        = errors.New("user not found")
 
 	AuthInvalidToken            = errors.New("invalid token")
 	AuthInvalidCredentials      = errors.New("invalid credentials")

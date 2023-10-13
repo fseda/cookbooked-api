@@ -17,6 +17,8 @@ type RecipeController interface {
 	CreateRecipe(c *fiber.Ctx) error
 	GetRecipesByUserID(c *fiber.Ctx) error
 	GetRecipeDetails(c *fiber.Ctx) error
+	AddRecipeIngredient(c *fiber.Ctx) error
+	// RemoveRecipeIngredient(c *fiber.Ctx) error
 	GetUserRecipesTitleBySubstring(c *fiber.Ctx) error
 }
 
@@ -105,8 +107,7 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, globalerrors.GlobalInternalServerError):
 			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-		case errors.Is(err, globalerrors.RecipeInvalidIngredient):
-		case errors.Is(err, globalerrors.RecipeInvalidUnit):
+		case errors.Is(err, globalerrors.RecipeInvalidUnit), errors.Is(err, globalerrors.RecipeInvalidIngredient):
 			return httpstatus.NotFoundError(err.Error())
 		default:
 			return httpstatus.BadRequestError(err.Error())
@@ -114,6 +115,49 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(newRecipe)
+}
+
+func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
+	userID := userClaims.UserID
+
+	recipeID, _ := c.ParamsInt("id")
+
+	var req recipeIngredientRequest
+	if err := c.BodyParser(&req); err != nil {
+		return httpstatus.UnprocessableEntityError(globalerrors.GlobalUnableToParseBody.Error())
+	}
+
+	errMsgs := validation.MyValidator.CreateErrorResponse(req)
+	if len(errMsgs) > 0 {
+		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
+	}
+
+	err := rc.recipeService.AddRecipeIngredient(
+		userID,
+		uint(recipeID),
+		req.IngredientID,
+		req.UnitID,
+		req.Quantity,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, globalerrors.GlobalInternalServerError):
+			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		case errors.Is(err, globalerrors.RecipeNotFound):
+			return httpstatus.NotFoundError(err.Error())
+		case errors.Is(err, globalerrors.RecipeInvalidIngredient), errors.Is(err, globalerrors.RecipeInvalidUnit):
+			return httpstatus.NotFoundError(err.Error())
+		case errors.Is(err, globalerrors.RecipeInvalidQuantity):
+			return httpstatus.BadRequestError(err.Error())
+		case errors.Is(err, globalerrors.RecipeIngredientsMustBeUnique):
+			return httpstatus.ConflictError(err.Error())
+		default:
+			return httpstatus.BadRequestError(err.Error())
+		}
+	}
+
+	return c.SendStatus(fiber.StatusCreated)
 }
 
 func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error {

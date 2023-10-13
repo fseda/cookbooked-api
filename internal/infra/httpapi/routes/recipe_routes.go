@@ -13,8 +13,9 @@ import (
 func loadRecipeRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	recipeRepository := repositories.NewRecipeRepository(db)
 	ingredientRepository := repositories.NewIngredientRepository(db)
+	recipeIngredientRepository := repositories.NewRecipeIngredientRepository(db)
 	unitRepository := repositories.NewUnitRepository(db)
-	recipeService := services.NewRecipeService(recipeRepository, ingredientRepository, unitRepository)
+	recipeService := services.NewRecipeService(recipeRepository, recipeIngredientRepository, ingredientRepository, unitRepository)
 	recipeController := controllers.NewRecipeController(recipeService)
 
 	recipeGroup := app.Group("/recipes")

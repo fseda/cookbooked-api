@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
@@ -18,24 +19,34 @@ type RecipeService interface {
 		link string,
 		userID uint,
 	) (*models.Recipe, error)
+	AddRecipeIngredient(
+		userID uint,
+		recipeID uint,
+		ingredientID uint,
+		unitID uint,
+		quantity float32,
+	) error
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
 	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
 	FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
 }
 
 type recipeService struct {
-	recipeRepository     repositories.RecipeRepository
-	ingredientRepository repositories.IngredientRepository
-	unitRepository       repositories.UnitRepository
+	recipeRepository           repositories.RecipeRepository
+	recipeIngredientRepository repositories.RecipeIngredientRepository
+	ingredientRepository       repositories.IngredientRepository
+	unitRepository             repositories.UnitRepository
 }
 
 func NewRecipeService(
 	recipeRepository repositories.RecipeRepository,
+	recipeIngredientRepository repositories.RecipeIngredientRepository,
 	ingredientRepository repositories.IngredientRepository,
 	unitRepository repositories.UnitRepository,
 ) RecipeService {
 	return &recipeService{
 		recipeRepository,
+		recipeIngredientRepository,
 		ingredientRepository,
 		unitRepository,
 	}
@@ -114,6 +125,61 @@ func (rs *recipeService) CreateRecipe(
 	return recipe, nil
 }
 
+func (rs *recipeService) AddRecipeIngredient(
+	userID uint,
+	recipeID uint,
+	ingredientID uint,
+	unitID uint,
+	quantity float32,
+) error {
+	exists, err := rs.recipeRepository.Exists(recipeID)
+	if err != nil {
+		return globalerrors.GlobalInternalServerError
+	}
+	if !exists {
+		return globalerrors.RecipeNotFound
+	}
+
+	// check if ingredient exists
+	exists, err = rs.ingredientRepository.Exists(ingredientID)
+	if err != nil {
+		return globalerrors.GlobalInternalServerError
+	}
+	if !exists {
+		return globalerrors.RecipeInvalidIngredient
+	}
+
+	// check if unit exists
+	exists, err = rs.unitRepository.Exists(unitID)
+	if err != nil {
+		return globalerrors.GlobalInternalServerError
+	}
+	if !exists {
+		return globalerrors.RecipeInvalidUnit
+	}
+
+	// check if quantity is valid
+	if quantity <= 0 {
+		return globalerrors.RecipeInvalidQuantity
+	}
+
+	recipeIngredient := &models.RecipeIngredient{
+		RecipeID:     recipeID,
+		IngredientID: ingredientID,
+		UnitID:       unitID,
+		Quantity:     quantity,
+	}
+
+	err = rs.recipeIngredientRepository.Link(recipeIngredient)
+	if err != nil {
+		if errors.Is(err, globalerrors.RecipeIngredientsMustBeUnique) {
+			return globalerrors.RecipeIngredientsMustBeUnique
+		}
+		return globalerrors.GlobalInternalServerError
+	}
+
+	return err
+}
 func (rs *recipeService) FindRecipesByUserID(userID uint) ([]models.Recipe, error) {
 	recipes, err := rs.recipeRepository.FindAllFromUser(userID)
 	if err != nil {

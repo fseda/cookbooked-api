@@ -1,12 +1,16 @@
 package repositories
 
 import (
+	"fmt"
+
+	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
 type RecipeIngredientRepository interface {
-	Link(recipeID, ingredientID, unitID uint, quantity float32) error
+	Link(recipeIngredient *models.RecipeIngredient) error
 	Unlink(recipeID, ingredientID uint) error
 	GetIngredientsByRecipeID(recipeID uint) ([]*models.Ingredient, error)
 	GetRecipesByIngredientID(ingredientID uint) ([]*models.Recipe, error)
@@ -21,14 +25,18 @@ func NewRecipeIngredientRepository(db *gorm.DB) RecipeIngredientRepository {
 	return &recipeIngredientRepository{db}
 }
 
-func (r *recipeIngredientRepository) Link(recipeID, ingredientID, unitID uint, quantity float32) error {
-	recipeIngredient := &models.RecipeIngredient{
-		RecipeID:     recipeID,
-		IngredientID: ingredientID,
-		UnitID:       unitID,
-		Quantity:     quantity,
+func (r *recipeIngredientRepository) Link(recipeIngredient *models.RecipeIngredient) error {
+	err := r.db.Create(recipeIngredient).Error
+	if err != nil {
+		if pgError := err.(*pgconn.PgError); pgError != nil {
+			if pgError.Code == "23505" {
+				return globalerrors.RecipeIngredientsMustBeUnique
+			}
+		}
+		return fmt.Errorf("error linking recipe ingredient: %w", err)
 	}
-	return r.db.Create(recipeIngredient).Error
+
+	return nil
 }
 
 func (r *recipeIngredientRepository) Unlink(recipeID, ingredientID uint) error {
@@ -52,7 +60,7 @@ func (r *recipeIngredientRepository) GetIngredientsByRecipeID(recipeID uint) ([]
 
 func (r *recipeIngredientRepository) GetRecipesByIngredientID(ingredientID uint) ([]*models.Recipe, error) {
 	// join the tables using preload
-	
+
 	var recipes []*models.Recipe
 	err := r.db.
 		Preload("RecipeIngredients").

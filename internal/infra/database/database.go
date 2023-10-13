@@ -31,7 +31,7 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 	db, err = gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,
 	}), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
 		return nil, err

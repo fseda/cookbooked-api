@@ -13,37 +13,43 @@ import (
 
 func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	userRepository := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepository)
-	userController := controllers.NewUserController(userService)
-
 	recipeRepository := repositories.NewRecipeRepository(db)
+	recipeIngredientRepository := repositories.NewRecipeIngredientRepository(db)
 	ingredientRepository := repositories.NewIngredientRepository(db)
 	unitRepository := repositories.NewUnitRepository(db)
-	recipeService := services.NewRecipeService(recipeRepository, ingredientRepository, unitRepository)
+
+	userService := services.NewUserService(userRepository)
+	recipeService := services.NewRecipeService(recipeRepository,
+		recipeIngredientRepository,
+		ingredientRepository,
+		unitRepository,
+	)
+
+	userController := controllers.NewUserController(userService)
 	recipeController := controllers.NewRecipeController(recipeService)
 
 	userGroup := app.Group("users")
-	userGroup.Get(
-		":id",
+	userGroup.Get(":id",
 		middlewares.ValidateID(),
 		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
 		middlewares.RoleRequired(models.ADMIN),
 		userController.GetOneByID,
 	)
 
-	meGroup := userGroup.Group("me")
-	meGroup.Get("", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), userController.Profile)
-	
-	userRecipeGroup := meGroup.Group("recipes")
-	userRecipeGroup.Get("", 
-		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), 
+	meGroup := app.Group("me", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
+	meGroup.Get("", userController.Profile)
+
+	meRecipeGroup := meGroup.Group("recipes")
+	meRecipeGroup.Get("",
 		recipeController.GetRecipesByUserID,
 	)
-	userRecipeGroup.Get("/:id",
-		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
+	meRecipeGroup.Get(":id",
 		middlewares.ValidateID(),
 		recipeController.GetRecipeDetails,
 	)
-	// userRecipeGroup.Post("/recipes/:id/link")
+	meRecipeGroup.Post(":id/ingredients",
+		middlewares.ValidateID(),
+		recipeController.AddRecipeIngredient,
+	)
 	// userRecipeGroup.Post("/recipes/:recipe_id/unlink/:recipe_ingredient_id")
 }

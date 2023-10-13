@@ -54,6 +54,10 @@ func MethodNotAllowedError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusMethodNotAllowed, Message: msg}
 }
 
+func NoContent(msg string) CustomError {
+	return CustomError{Code: fiber.StatusNoContent, Message: msg}
+}
+
 type GlobalErrorHandlerResp struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`

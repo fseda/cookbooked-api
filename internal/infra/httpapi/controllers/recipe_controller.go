@@ -18,7 +18,7 @@ type RecipeController interface {
 	GetRecipesByUserID(c *fiber.Ctx) error
 	GetRecipeDetails(c *fiber.Ctx) error
 	AddRecipeIngredient(c *fiber.Ctx) error
-	// RemoveRecipeIngredient(c *fiber.Ctx) error
+	RemoveRecipeIngredient(c *fiber.Ctx) error
 	GetUserRecipesTitleBySubstring(c *fiber.Ctx) error
 }
 
@@ -133,7 +133,7 @@ func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
 	}
 
-	err := rc.recipeService.AddRecipeIngredient(
+	rowsAff, err := rc.recipeService.AddRecipeIngredient(
 		userID,
 		uint(recipeID),
 		req.IngredientID,
@@ -144,20 +144,60 @@ func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, globalerrors.GlobalInternalServerError):
 			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		
 		case errors.Is(err, globalerrors.RecipeNotFound):
 			return httpstatus.NotFoundError(err.Error())
+		
 		case errors.Is(err, globalerrors.RecipeInvalidIngredient), errors.Is(err, globalerrors.RecipeInvalidUnit):
 			return httpstatus.NotFoundError(err.Error())
+		
 		case errors.Is(err, globalerrors.RecipeInvalidQuantity):
 			return httpstatus.BadRequestError(err.Error())
+		
 		case errors.Is(err, globalerrors.RecipeIngredientsMustBeUnique):
 			return httpstatus.ConflictError(err.Error())
+		
 		default:
 			return httpstatus.BadRequestError(err.Error())
 		}
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"rows_affected": rowsAff,
+	})
+}
+
+func (rc *recipeController) RemoveRecipeIngredient(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
+	userID := userClaims.UserID
+
+	recipeID, _ := c.ParamsInt("recipe_id")
+	ingredientID, _ := c.ParamsInt("recipe_ingredient_id")
+
+	rowsAff, err := rc.recipeService.RemoveRecipeIngredient(userID, uint(recipeID), uint(ingredientID))
+	if err != nil {
+		switch err {
+		case globalerrors.GlobalInternalServerError:
+			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+
+		case globalerrors.RecipeNotFound:
+			return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
+
+		case globalerrors.RecipeIngredientNotFound:
+			return httpstatus.NotFoundError(globalerrors.RecipeIngredientNotFound.Error())
+
+		default:
+			return httpstatus.BadRequestError(err.Error())
+		}
+	}
+
+	if rowsAff == 0 {
+		return httpstatus.NoContent("no rows affected")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"rows_affected": rowsAff,
+	})
 }
 
 func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error {

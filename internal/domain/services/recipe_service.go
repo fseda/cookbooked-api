@@ -25,7 +25,8 @@ type RecipeService interface {
 		ingredientID uint,
 		unitID uint,
 		quantity float32,
-	) error
+	) (int64, error)
+	RemoveRecipeIngredient(userID, recipeID, ingredientID uint) (int64, error)
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
 	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
 	FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
@@ -131,36 +132,43 @@ func (rs *recipeService) AddRecipeIngredient(
 	ingredientID uint,
 	unitID uint,
 	quantity float32,
-) error {
-	exists, err := rs.recipeRepository.Exists(recipeID)
+) (rowsAff int64, err error) {
+	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
 	if err != nil {
-		return globalerrors.GlobalInternalServerError
+		err = globalerrors.GlobalInternalServerError
+		return
 	}
 	if !exists {
-		return globalerrors.RecipeNotFound
+		err = globalerrors.RecipeNotFound
+		return
 	}
 
 	// check if ingredient exists
 	exists, err = rs.ingredientRepository.Exists(ingredientID)
 	if err != nil {
-		return globalerrors.GlobalInternalServerError
+		err = globalerrors.GlobalInternalServerError
+		return
 	}
 	if !exists {
-		return globalerrors.RecipeInvalidIngredient
+		err = globalerrors.RecipeInvalidIngredient
+		return
 	}
 
 	// check if unit exists
 	exists, err = rs.unitRepository.Exists(unitID)
 	if err != nil {
-		return globalerrors.GlobalInternalServerError
+		err = globalerrors.GlobalInternalServerError
+		return
 	}
 	if !exists {
-		return globalerrors.RecipeInvalidUnit
+		err = globalerrors.RecipeInvalidUnit
+		return
 	}
 
 	// check if quantity is valid
 	if quantity <= 0 {
-		return globalerrors.RecipeInvalidQuantity
+		err = globalerrors.RecipeInvalidQuantity
+		return
 	}
 
 	recipeIngredient := &models.RecipeIngredient{
@@ -170,16 +178,43 @@ func (rs *recipeService) AddRecipeIngredient(
 		Quantity:     quantity,
 	}
 
-	err = rs.recipeIngredientRepository.Link(recipeIngredient)
+	rowsAff, err = rs.recipeIngredientRepository.Link(recipeIngredient)
 	if err != nil {
 		if errors.Is(err, globalerrors.RecipeIngredientsMustBeUnique) {
-			return globalerrors.RecipeIngredientsMustBeUnique
+			err = globalerrors.RecipeIngredientsMustBeUnique
+			return
 		}
-		return globalerrors.GlobalInternalServerError
+		err = globalerrors.GlobalInternalServerError
+		return
 	}
 
-	return err
+	return rowsAff, nil
 }
+
+func (rs *recipeService) RemoveRecipeIngredient(userID, recipeID, ingredientID uint) (rowsAff int64, err error) {
+	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	if !exists {
+		err = globalerrors.RecipeNotFound
+		return
+	}
+	
+	rowsAff, err = rs.recipeIngredientRepository.Unlink(recipeID, ingredientID)
+	if err != nil {
+		if errors.Is(err, globalerrors.RecipeIngredientNotFound) {
+			err = globalerrors.RecipeIngredientNotFound
+			return
+		}
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+
+	return rowsAff, nil
+}
+
 func (rs *recipeService) FindRecipesByUserID(userID uint) ([]models.Recipe, error) {
 	recipes, err := rs.recipeRepository.FindAllFromUser(userID)
 	if err != nil {

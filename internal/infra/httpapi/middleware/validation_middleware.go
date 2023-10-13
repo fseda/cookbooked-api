@@ -6,9 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func ValidateID() fiber.Handler {
+func ValidateID(id string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		idInt, err := c.ParamsInt("id")
+		idInt, err := c.ParamsInt(id)
 		if err != nil || idInt <= 0{
 			return httpstatus.BadRequestError(globalerrors.GlobalInvalidID.Error())
 		}

@@ -30,7 +30,7 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 
 	userGroup := app.Group("users")
 	userGroup.Get(":id",
-		middlewares.ValidateID(),
+		middlewares.ValidateID("id"),
 		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
 		middlewares.RoleRequired(models.ADMIN),
 		userController.GetOneByID,
@@ -43,13 +43,18 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	meRecipeGroup.Get("",
 		recipeController.GetRecipesByUserID,
 	)
-	meRecipeGroup.Get(":id",
-		middlewares.ValidateID(),
+	meRecipeGroup.Get(":recipe_id",
+		middlewares.ValidateID("recipe_id"),
 		recipeController.GetRecipeDetails,
 	)
-	meRecipeGroup.Post(":id/ingredients",
-		middlewares.ValidateID(),
+	meRecipeGroup.Post(":recipe_id/ingredients",
+		middlewares.ValidateID("recipe_id"),
 		recipeController.AddRecipeIngredient,
+	)
+	meRecipeGroup.Delete(":recipe_id/ingredients/:recipe_ingredient_id",
+		middlewares.ValidateID("recipe_id"),
+		middlewares.ValidateID("recipe_ingredient_id"),
+		recipeController.RemoveRecipeIngredient,
 	)
 	// userRecipeGroup.Post("/recipes/:recipe_id/unlink/:recipe_ingredient_id")
 }

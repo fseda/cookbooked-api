@@ -12,6 +12,7 @@ type RecipeRepository interface {
 	FindAllFromUser(userID uint) ([]models.Recipe, error)
 	FindByID(id uint) (*models.Recipe, error)
 	Exists(id uint) (bool, error)
+	UserRecipeExists(userID, recipeID uint) (bool, error)
 	FindRecipesByTitleSubstring(titleSubstring string) ([]models.Recipe, error)
 	FindUserRecipesByTitleSubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
 	IsRecipeTitleTakenByUser(id uint, title string) (bool, error)
@@ -65,6 +66,16 @@ func (r *recipeRepository) FindByID(id uint) (*models.Recipe, error) {
 func (r *recipeRepository) Exists(id uint) (bool, error) {
 	var count int64
 	res := r.db.Table("recipes").Select("id").Where("id = ?", id).Count(&count)
+	if res.Error != nil {
+		return false, res.Error
+	}
+
+	return count == 1, nil
+}
+
+func (r *recipeRepository) UserRecipeExists(userID, recipeID uint) (bool, error) {
+	var count int64
+	res := r.db.Table("recipes").Select("id").Where("id = ? AND user_id = ?", recipeID, userID).Count(&count)
 	if res.Error != nil {
 		return false, res.Error
 	}

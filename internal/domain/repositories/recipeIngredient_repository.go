@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"fmt"
 
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
@@ -10,8 +11,8 @@ import (
 )
 
 type RecipeIngredientRepository interface {
-	Link(recipeIngredient *models.RecipeIngredient) error
-	Unlink(recipeID, ingredientID uint) error
+	Link(recipeIngredient *models.RecipeIngredient) (int64, error)
+	Unlink(recipeID, ingredientID uint) (int64, error)
 	GetIngredientsByRecipeID(recipeID uint) ([]*models.Ingredient, error)
 	GetRecipesByIngredientID(ingredientID uint) ([]*models.Recipe, error)
 	GetUserRecipesByIngredientID(userID, ingredientID uint) ([]*models.Recipe, error)
@@ -25,22 +26,36 @@ func NewRecipeIngredientRepository(db *gorm.DB) RecipeIngredientRepository {
 	return &recipeIngredientRepository{db}
 }
 
-func (r *recipeIngredientRepository) Link(recipeIngredient *models.RecipeIngredient) error {
-	err := r.db.Create(recipeIngredient).Error
+func (r *recipeIngredientRepository) Link(recipeIngredient *models.RecipeIngredient) (int64, error) {
+	res := r.db.Create(recipeIngredient)
+	err := res.Error
+	rowsAff := res.RowsAffected
+
 	if err != nil {
 		if pgError := err.(*pgconn.PgError); pgError != nil {
 			if pgError.Code == "23505" {
-				return globalerrors.RecipeIngredientsMustBeUnique
+				return rowsAff, globalerrors.RecipeIngredientsMustBeUnique
 			}
 		}
-		return fmt.Errorf("error linking recipe ingredient: %w", err)
+		return rowsAff, fmt.Errorf("error linking recipe ingredient: %w", err)
 	}
 
-	return nil
+	return rowsAff, nil
 }
 
-func (r *recipeIngredientRepository) Unlink(recipeID, ingredientID uint) error {
-	return r.db.Where("recipe_id = ? AND ingredient_id = ?", recipeID, ingredientID).Delete(&models.RecipeIngredient{}).Error
+func (r *recipeIngredientRepository) Unlink(recipeID, ingredientID uint) (int64, error) {
+	res := r.db.Unscoped().Where("recipe_id = ? AND ingredient_id = ?", recipeID, ingredientID).Delete(&models.RecipeIngredient{})
+	err := res.Error
+	rowsAff := res.RowsAffected
+
+	if res.Error != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return rowsAff, globalerrors.RecipeIngredientNotFound
+		}
+		return rowsAff, fmt.Errorf("error unlinking recipe ingredient: %w", err)
+	}
+
+	return rowsAff, nil
 }
 
 func (r *recipeIngredientRepository) GetIngredientsByRecipeID(recipeID uint) ([]*models.Ingredient, error) {

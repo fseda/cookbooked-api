@@ -105,6 +105,9 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, globalerrors.GlobalInternalServerError):
 			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		case errors.Is(err, globalerrors.RecipeInvalidIngredient):
+		case errors.Is(err, globalerrors.RecipeInvalidUnit):
+			return httpstatus.NotFoundError(err.Error())
 		default:
 			return httpstatus.BadRequestError(err.Error())
 		}

@@ -10,7 +10,7 @@ import (
 type RecipeRepository interface {
 	Create(recipe *models.Recipe) error
 	FindAllFromUser(userID uint) ([]models.Recipe, error)
-	FindByID(id uint) (models.Recipe, error)
+	FindByID(id uint) (*models.Recipe, error)
 	FindRecipesByTitleSubstring(titleSubstring string) ([]models.Recipe, error)
 	FindUserRecipesByTitleSubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
 	IsRecipeTitleTakenByUser(id uint, title string) (bool, error)
@@ -44,7 +44,7 @@ func (r *recipeRepository) FindAllFromUser(userID uint) ([]models.Recipe, error)
 	return recipes, nil
 }
 
-func (r *recipeRepository) FindByID(id uint) (models.Recipe, error) {
+func (r *recipeRepository) FindByID(id uint) (*models.Recipe, error) {
 	var recipe models.Recipe
 	if err := r.db.
 		Preload("RecipeTags").
@@ -54,11 +54,11 @@ func (r *recipeRepository) FindByID(id uint) (models.Recipe, error) {
 		Preload("RecipeIngredients.Unit").
 		First(&recipe, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return models.Recipe{}, nil
+			return nil, nil
 		}
-		return models.Recipe{}, err
+		return nil, err
 	}
-	return recipe, nil
+	return &recipe, nil
 }
 
 func (r *recipeRepository) FindRecipesByTitleSubstring(title string) ([]models.Recipe, error) {

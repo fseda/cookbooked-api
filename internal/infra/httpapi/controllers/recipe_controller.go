@@ -146,7 +146,14 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 
 	recipe, err := rc.recipeService.FindUserRecipeByID(userID, uint(recipeID))
 	if err != nil {
-		return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		switch err {
+		case globalerrors.GlobalInternalServerError:
+			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		case globalerrors.RecipeNotFound:
+			return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
+		default:
+			return httpstatus.BadRequestError(err.Error())
+		}
 	}
 
 	recipeDetailsResponse := &getRecipeDetailsResponse{

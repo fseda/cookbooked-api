@@ -127,10 +127,10 @@ func (rs *recipeService) FindUserRecipeByID(userID, recipeID uint) (*models.Reci
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
-	if recipe.UserID != nil && *recipe.UserID != userID {
+	if recipe == nil || *recipe.UserID != userID {
 		return nil, globalerrors.RecipeNotFound
 	}
-	return &recipe, nil
+	return recipe, nil
 }
 
 func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error) {

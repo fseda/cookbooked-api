@@ -21,9 +21,8 @@ type RecipeTag struct {
 
 type RecipeIngredient struct {
 	Base
-	Quantity float32 `gorm:"column:quantity; not null;" json:"quantity"`
-	RecipeID uint    `gorm:"column:recipe_id; uniqueIndex:recipe_ingredients_must_be_unique;" json:"recipe_id"`
-	// Recipe       Recipe     `gorm:"foreignKey:RecipeID; references:ID"`
+	Quantity     float32    `gorm:"column:quantity; not null;" json:"quantity"`
+	RecipeID     uint       `gorm:"column:recipe_id; uniqueIndex:recipe_ingredients_must_be_unique;" json:"recipe_id"`
 	IngredientID uint       `gorm:"column:ingredient_id; uniqueIndex:recipe_ingredients_must_be_unique;" json:"ingredient_id"`
 	Ingredient   Ingredient `gorm:"foreignKey:IngredientID; references:ID" json:"ingredient,omitempty"`
 	UnitID       uint       `gorm:"column:unit_id;" json:"unit_id"`

@@ -25,7 +25,7 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 
 	sqlDB, err := sql.Open("pgx", dsn)
 	if err != nil {
-		log.Fatalf("Failed opening connection to postgres: %v", err)
+		return nil, fmt.Errorf("Failed opening connection to postgres: %v", err)
 	}
 
 	db, err = gorm.Open(postgres.New(postgres.Config{

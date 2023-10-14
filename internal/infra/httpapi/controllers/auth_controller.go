@@ -34,6 +34,14 @@ type loginUserResponse struct {
 	Token string `json:"token"`
 }
 
+// @Summary Login into the app
+// @Description Logs an existing user into the app
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body loginUserRequest true "User credentials"
+// @Success 200 {object} loginUserResponse
+// @Router /auth/login [post]
 func (a *authController) Login(c *fiber.Ctx) error {
 	var req loginUserRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -71,6 +79,14 @@ type registerUserResponse struct {
 	*models.User
 }
 
+// @Summary Register user in the app
+// @Description Registers a new user in the app
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body registerUserRequest true "New user credentials"
+// @Success 200 {object} registerUserResponse
+// @Router /auth/signup [post]
 func (a *authController) RegisterUser(c *fiber.Ctx) error {
 	var req registerUserRequest
 	if err := c.BodyParser(&req); err != nil {

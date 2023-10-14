@@ -7,9 +7,10 @@ import (
 )
 
 func LoadRoutes(ctx *config.AppContext) {
-	// app.Get("/swagger", swagger.HandlerDefault)
 
+	loadSwagger(ctx.App)
 	loadHealthCheck(ctx.App)
+	
 	loadUserRoutes(ctx.App, ctx.DB, ctx.Env)
 	loadAuthRoutes(ctx.App, ctx.DB, ctx.Env)
 	loadRecipeRoutes(ctx.App, ctx.DB, ctx.Env)

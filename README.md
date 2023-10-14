@@ -1,9 +1,9 @@
-# Recipe App API
+# CookBooked App API
 
 A RESTful API to manage recipes and ingredients, allowing users to create, read, update, and delete (CRUD) recipes and ingredients, and categorize them. The app supports user authentication and allows users to manage their recipes.
 
 ## Table of Contents
-- [Recipe App API](#recipe-app-api)
+- [CookBooked App API](#cookbooked-app-api)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
   - [Getting Started](#getting-started)

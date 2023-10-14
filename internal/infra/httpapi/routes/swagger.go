@@ -6,5 +6,5 @@ import (
 )
 
 func loadSwagger(app *fiber.App) {
-	app.Get("/swagger/*", swagger.HandlerDefault) // default
+	app.Get("/docs/*", swagger.HandlerDefault) // default
 }

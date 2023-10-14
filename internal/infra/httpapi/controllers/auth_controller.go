@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
-	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/services"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
 	"github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
@@ -76,7 +75,7 @@ type registerUserRequest struct {
 }
 
 type registerUserResponse struct {
-	*models.User
+	Token string `json:"token"`
 }
 
 // @Summary Register user in the app
@@ -85,7 +84,7 @@ type registerUserResponse struct {
 // @Accept json
 // @Produce json
 // @Param user body registerUserRequest true "New user credentials"
-// @Success 200 {object} registerUserResponse
+// @Success 201 {object} registerUserResponse "User created successfully, returns jwt token"
 // @Router /auth/signup [post]
 func (a *authController) RegisterUser(c *fiber.Ctx) error {
 	var req registerUserRequest
@@ -112,7 +111,19 @@ func (a *authController) RegisterUser(c *fiber.Ctx) error {
 		return httpstatus.InternalServerError(err.Error())
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(registerUserResponse{
-		user,
+	token, err := a.service.Login(user.Username, req.Password)
+	if err != nil {
+		switch err {
+		case globalerrors.GlobalInternalServerError:
+			return httpstatus.InternalServerError(err.Error())
+		case globalerrors.AuthInvalidCredentials:
+			return httpstatus.UnauthorizedError(err.Error())
+		default:
+			return httpstatus.InternalServerError("Something went wrong. Please try again later.")
+		}
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(loginUserResponse{
+		Token: token,
 	})
 }

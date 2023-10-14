@@ -56,5 +56,4 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 		middlewares.ValidateID("recipe_ingredient_id"),
 		recipeController.RemoveRecipeIngredient,
 	)
-	// userRecipeGroup.Post("/recipes/:recipe_id/unlink/:recipe_ingredient_id")
 }

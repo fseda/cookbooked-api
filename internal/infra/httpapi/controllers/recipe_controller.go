@@ -121,7 +121,7 @@ func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
 
-	recipeID, _ := c.ParamsInt("id")
+	recipeID, _ := c.ParamsInt("recipe_id")
 
 	var req recipeIngredientRequest
 	if err := c.BodyParser(&req); err != nil {

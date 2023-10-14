@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/fseda/cookbooked-api/internal/infra/config"
 	"github.com/gofiber/fiber/v2/log"
@@ -28,13 +29,20 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 		return nil, fmt.Errorf("Failed opening connection to postgres: %v", err)
 	}
 
+	var logLevel logger.LogLevel
+	if os.Getenv("GO_ENV") == "development" {
+		logLevel = logger.Info
+	} else {
+		logLevel = logger.Error
+	}
+
 	db, err = gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,
 	}), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logLevel),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed opening connection to postgres: %v", err)
 	}
 
 	log.Info("💾 Database connection established")

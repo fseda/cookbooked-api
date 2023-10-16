@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/fseda/cookbooked-api/internal/infra/config"
+	"github.com/fseda/cookbooked-api/internal/infra/httpapi/httpstatus"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 )
@@ -16,7 +17,7 @@ func LoadRoutes(ctx *config.AppContext) {
 	loadRecipeRoutes(ctx.App, ctx.DB, ctx.Env)
 
 	ctx.App.All("*", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusNotFound)
+		return httpstatus.NotFoundError("Route not found")
 	})
 
 	log.Info("🛣️  Routes loaded")

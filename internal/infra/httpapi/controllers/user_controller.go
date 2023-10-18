@@ -33,6 +33,18 @@ type userProfileResponse struct {
 	Role     string `json:"role"`
 }
 
+//  Profile retrieves the profile details of the authenticated user. 
+//	@Summary		Get logged in user's profile
+//	@Description	Retrieve the profile of the currently authenticated user.
+//	@ID				get-user-profile
+//	@Tags			Users
+//	@Security		Bearer
+//	@Produce		json
+//	@Success		200	{object}	userProfileResponse
+//	@Failure		500	{object}	httpstatus.GlobalErrorHandlerResp	"Internal server error"
+//	@Failure		401	{object}	httpstatus.GlobalErrorHandlerResp	"Unauthorized"
+//	@Failure		404	{object}	httpstatus.GlobalErrorHandlerResp	"User not found"
+//	@Router			/me [get]
 func (u *userController) Profile(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 
@@ -53,21 +65,46 @@ func (u *userController) Profile(c *fiber.Ctx) error {
 	})
 }
 
+//  GetOneByID retrieves the details of a user by their ID. 
+//	@Summary		Get user by ID
+//	@Description	Retrieve detailed information of a user based on their ID.
+//	@ID				get-user-by-id
+//	@Tags			Users
+//	@Security		Bearer
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	userProfileResponse
+//	@Failure		400	{object}	httpstatus.GlobalErrorHandlerResp	"User not Found"
+//	@Failure		500	{object}	httpstatus.GlobalErrorHandlerResp	"Internal Server Error"
+//	@Failure		401	{object}	httpstatus.GlobalErrorHandlerResp	"Unauthorized
+//	@Router			/users/{id} [get]
 func (u *userController) GetOneByID(c *fiber.Ctx) error {
 	id, _ := c.ParamsInt("id")
 	user, err := u.service.FindByID(uint(id))
 	if err != nil {
 		switch err {
-			case globalerrors.UserNotFound:
-				msg := fmt.Sprintf("User with ID %d not found", id)
-				return httpstatus.NotFoundError(msg)
-			default:
-				return httpstatus.InternalServerError(err.Error())
+		case globalerrors.UserNotFound:
+			msg := fmt.Sprintf("User with ID %d not found", id)
+			return httpstatus.NotFoundError(msg)
+		default:
+			return httpstatus.InternalServerError(err.Error())
 		}
 	}
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
+//  Delete deletes the authenticated user's account. 
+//	@Summary		Delete logged-in user's account
+//	@Description	Delete the account of the authenticated user.
+//	@ID				delete-user-by-id
+//	@Tags			Users
+//	@Security		ApiKeyAuth
+//	@Produce		json
+//	@Success		200
+//	@Success		204
+//	@Failure		400	{object}	httpstatus.GlobalErrorHandlerResp	"Invalid id. Should be a positive integer."
+//	@Failure		500	{object}	httpstatus.GlobalErrorHandlerResp	"Could not delete user."
+//	@Router			/me [delete]
 func (u *userController) Delete(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -79,10 +116,9 @@ func (u *userController) Delete(c *fiber.Ctx) error {
 	if err != nil {
 		return httpstatus.InternalServerError("Could not delete user.")
 	}
-
 	if ra == 0 {
-		return c.SendStatus(fiber.StatusNoContent)
+		return httpstatus.NoContent("Rows affected: 0")
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return httpstatus.OK("User deleted successfully.")
 }

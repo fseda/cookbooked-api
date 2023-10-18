@@ -11,12 +11,16 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 )
 
-// @title CookBooked API
-// @version 1.0
-// @description API for CookBooked, a recipe management app.
-// @contact.name Felipe Seda
-// @license.name MIT
-// @BasePath /
+//	@title						CookBooked API
+//	@version					1.0
+//	@description				API for CookBooked, a recipe management app.
+//	@contact.name				Felipe Seda
+//	@license.name				MIT
+//	@BasePath					/
+//
+//	@securityDefinitions.apikey	Bearer
+//	@in							header
+//	@name						Authorization
 func main() {
 	// Exit code for graceful shutdown
 	var exitCode int

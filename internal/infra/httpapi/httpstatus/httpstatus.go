@@ -22,6 +22,10 @@ func (e CustomError) StatusCode() int {
 	return e.Code
 }
 
+func OK(msg string) CustomError {
+	return CustomError{Code: fiber.StatusOK, Message: msg}
+}
+
 func NotFoundError(msg string) CustomError {
 	return CustomError{Code: fiber.StatusNotFound, Message: msg}
 }
@@ -59,8 +63,8 @@ func NoContent(msg string) CustomError {
 }
 
 type GlobalErrorHandlerResp struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Success bool   `json:"success" example:"false"`
+	Message string `json:"message" example:"Error message"`
 }
 
 func ErrorHandler(c *fiber.Ctx, err error) error {

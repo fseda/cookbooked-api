@@ -30,6 +30,26 @@ definitions:
       token:
         type: string
     type: object
+  controllers.userProfileResponse:
+    properties:
+      email:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  httpstatus.GlobalErrorHandlerResp:
+    properties:
+      message:
+        example: Error message
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
 info:
   contact:
     name: Felipe Seda
@@ -47,7 +67,7 @@ paths:
       parameters:
       - description: User credentials
         in: body
-        name: user
+        name: user-credentials
         required: true
         schema:
           $ref: '#/definitions/controllers.loginUserRequest'
@@ -58,9 +78,9 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/controllers.loginUserResponse'
-      summary: Login into the app
+      summary: Login user into the app
       tags:
-      - users
+      - Users
   /auth/signup:
     post:
       consumes:
@@ -69,7 +89,7 @@ paths:
       parameters:
       - description: New user credentials
         in: body
-        name: user
+        name: user-info
         required: true
         schema:
           $ref: '#/definitions/controllers.registerUserRequest'
@@ -82,5 +102,95 @@ paths:
             $ref: '#/definitions/controllers.registerUserResponse'
       summary: Register user in the app
       tags:
-      - users
+      - Users
+  /me:
+    delete:
+      description: Delete the account of the authenticated user.
+      operationId: delete-user-by-id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "204":
+          description: No Content
+        "400":
+          description: Invalid id. Should be a positive integer.
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+        "500":
+          description: Could not delete user.
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete logged-in user's account
+      tags:
+      - Users
+    get:
+      description: Retrieve the profile of the currently authenticated user.
+      operationId: get-user-profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.userProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - Bearer: []
+      summary: Get logged in user's profile
+      tags:
+      - Users
+  /users/{id}:
+    get:
+      description: Retrieve detailed information of a user based on their ID.
+      operationId: get-user-by-id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.userProfileResponse'
+        "400":
+          description: User not Found
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - Bearer: []
+      summary: Get user by ID
+      tags:
+      - Users
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

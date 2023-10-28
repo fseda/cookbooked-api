@@ -37,9 +37,9 @@ type loginUserResponse struct {
 //	@Description	Logs an existing user into the app
 //	@Tags			Users
 //	@Accept			json
-//	@Produce		json
-//	@Param			user-credentials	body		loginUserRequest	true	"User credentials"
-//	@Success		200					{object}	loginUserResponse
+//	@Param			user-credentials	body	loginUserRequest	true	"User credentials"
+//	@Success		200					
+//	@Header			200					{string}	Authorization	"Bearer <token>"
 //	@Router			/auth/login [post]
 func (a *authController) Login(c *fiber.Ctx) error {
 	var req loginUserRequest
@@ -63,28 +63,24 @@ func (a *authController) Login(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(fiber.StatusOK).JSON(loginUserResponse{
-		token,
-	})
+	c.Set("Authorization", "Bearer "+token)
+
+	return c.SendStatus(fiber.StatusOK)
 }
 
 type registerUserRequest struct {
 	Username string `json:"username" validate:"required=true,min=3,max=255"`
 	Email    string `json:"email" validate:"required=true,email"`
-	Password string `json:"password" validate:"required=true,min=6,max=72"`
-}
-
-type registerUserResponse struct {
-	Token string `json:"token"`
+	Password string `json:"password" validate:"required=true,min=4,max=72"`
 }
 
 //	@Summary		Register user in the app
 //	@Description	Registers a new user in the app
 //	@Tags			Users
 //	@Accept			json
-//	@Produce		json
-//	@Param			user-info	body		registerUserRequest		true	"New user credentials"
-//	@Success		201			{object}	registerUserResponse	"User created successfully, returns jwt token"
+//	@Param			user-info	body	registerUserRequest	true	"New user credentials"
+//	@Success		201			
+//	@Header			201			{string}	Authorization	"Bearer <token>"
 //	@Router			/auth/signup [post]
 func (a *authController) RegisterUser(c *fiber.Ctx) error {
 	var req registerUserRequest
@@ -123,7 +119,7 @@ func (a *authController) RegisterUser(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(loginUserResponse{
-		Token: token,
-	})
+	c.Set("Authorization", "Bearer "+token)
+
+	return c.SendStatus(fiber.StatusCreated)
 }

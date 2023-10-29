@@ -213,6 +213,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/exists": {
+            "get": {
+                "description": "Check if a user exists by their username or email.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Check if user exists",
+                "operationId": "check-user-exists",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/users/{id}": {
             "get": {
                 "security": [

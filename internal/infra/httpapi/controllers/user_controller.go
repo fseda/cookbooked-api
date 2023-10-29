@@ -14,6 +14,7 @@ import (
 
 type UserController interface {
 	GetOneByID(c *fiber.Ctx) error
+	ExistsOne(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
 	Profile(c *fiber.Ctx) error
 }
@@ -121,4 +122,18 @@ func (u *userController) Delete(c *fiber.Ctx) error {
 	}
 
 	return httpstatus.OK("User deleted successfully.")
+}
+
+// ExistsOne checks if a user exists by their username or email.
+//	@Summary		Check if user exists
+//	@Description	Check if a user exists by their username or email.
+//	@ID				check-user-exists
+//	@Tags			Users
+//	@Produce		json
+//	@Param			username	query	string	true	"Username"
+//	@Router			/users/exists [get]
+func (u *userController) ExistsOne(c *fiber.Ctx) error {
+	username := c.Query("username")
+	exists, _ := u.service.ExistsOne(username)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"exists": exists})
 }

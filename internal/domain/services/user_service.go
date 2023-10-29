@@ -11,6 +11,7 @@ type UserService interface {
 	FindByID(id uint) (*models.User, error)
 	Create(username, email, password string) (*models.User, error)
 	Delete(id uint) (int64, error)
+	ExistsOne(username string) (bool, error)
 }
 
 type userService struct {
@@ -64,4 +65,10 @@ func (us *userService) Create(username, email, password string) (*models.User, e
 
 func (us *userService) Delete(id uint) (int64, error) {
 	return us.repository.Delete(id)
+}
+
+func (us *userService) ExistsOne(username string) (bool, error) {
+	usernameExists, _ := us.repository.UserExists("username", username)
+	emailExists, _ := us.repository.UserExists("email", username)
+	return usernameExists || emailExists, nil
 }

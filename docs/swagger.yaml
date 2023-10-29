@@ -236,6 +236,22 @@ paths:
       summary: Get user by ID
       tags:
       - Users
+  /users/exists:
+    get:
+      description: Check if a user exists by their username or email.
+      operationId: check-user-exists
+      parameters:
+      - description: Username
+        in: query
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Check if user exists
+      tags:
+      - Users
 securityDefinitions:
   ApiKeyAuth:
     in: header

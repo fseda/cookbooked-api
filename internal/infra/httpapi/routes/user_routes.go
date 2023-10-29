@@ -35,6 +35,7 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 		middlewares.RoleRequired(models.ADMIN),
 		userController.GetOneByID,
 	)
+	userGroup.Get("/exists", userController.ExistsOne)
 
 	meGroup := app.Group("me", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
 	meGroup.Get("", userController.Profile)

@@ -19,7 +19,6 @@ type RecipeController interface {
 	GetRecipeDetails(c *fiber.Ctx) error
 	AddRecipeIngredient(c *fiber.Ctx) error
 	RemoveRecipeIngredient(c *fiber.Ctx) error
-	GetUserRecipesTitleBySubstring(c *fiber.Ctx) error
 }
 
 type recipeController struct {
@@ -66,6 +65,17 @@ type getAllRecipesResponse struct {
 	Recipes []*getRecipeResponse `json:"recipes"`
 }
 
+// CreateRecipe godoc
+//	@Summary		Create a new recipe
+//	@Description	Create a new recipe with the given input data
+//	@Tags			Recipes
+//	@Accept			json
+//	@Produce		json
+//	@Param			input	body	createRecipeRequest	true	"Recipe creation data"
+//	@Security		ApiKeyAuth
+//	@Success		201	{object}	createRecipeRequest
+//	@Failure		400	{object}	httpstatus.GlobalErrorHandlerResp
+//	@Router			/recipes/new   [post]
 func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
@@ -252,6 +262,3 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(recipeDetailsResponse)
 }
-
-// TODO: Implement this
-func (rc *recipeController) GetUserRecipesTitleBySubstring(c *fiber.Ctx) error { return nil }

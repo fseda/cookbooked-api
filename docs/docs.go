@@ -26,9 +26,6 @@ const docTemplate = `{
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Users"
                 ],
@@ -47,8 +44,11 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.loginUserResponse"
+                        "headers": {
+                            "Authorization": {
+                                "type": "string",
+                                "description": "Bearer \u003ctoken\u003e"
+                            }
                         }
                     }
                 }
@@ -58,9 +58,6 @@ const docTemplate = `{
             "post": {
                 "description": "Registers a new user in the app",
                 "consumes": [
-                    "application/json"
-                ],
-                "produces": [
                     "application/json"
                 ],
                 "tags": [
@@ -80,9 +77,12 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "User created successfully, returns jwt token",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.registerUserResponse"
+                        "description": "Created",
+                        "headers": {
+                            "Authorization": {
+                                "type": "string",
+                                "description": "Bearer \u003ctoken\u003e"
+                            }
                         }
                     }
                 }
@@ -92,7 +92,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "Bearer": []
+                        "ApiKeyAuth": []
                     }
                 ],
                 "description": "Retrieve the profile of the currently authenticated user.",
@@ -168,11 +168,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/recipes/new": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create a new recipe with the given input data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Create a new recipe",
+                "parameters": [
+                    {
+                        "description": "Recipe creation data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.createRecipeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.createRecipeRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/httpstatus.GlobalErrorHandlerResp"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "get": {
                 "security": [
                     {
-                        "Bearer": []
+                        "ApiKeyAuth": []
                     }
                 ],
                 "description": "Retrieve detailed information of a user based on their ID.",
@@ -223,6 +268,37 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.createRecipeRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "recipe_ingredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.recipeIngredientRequest"
+                    }
+                },
+                "tag_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
         "controllers.loginUserRequest": {
             "type": "object",
             "properties": {
@@ -234,11 +310,17 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.loginUserResponse": {
+        "controllers.recipeIngredientRequest": {
             "type": "object",
             "properties": {
-                "token": {
-                    "type": "string"
+                "ingredient_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "unit_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -251,20 +333,12 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "maxLength": 72,
-                    "minLength": 6
+                    "minLength": 4
                 },
                 "username": {
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 3
-                }
-            }
-        },
-        "controllers.registerUserResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
                 }
             }
         },
@@ -300,7 +374,7 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "Bearer": {
+        "ApiKeyAuth": {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

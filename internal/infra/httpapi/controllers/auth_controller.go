@@ -65,7 +65,7 @@ func (a *authController) Login(c *fiber.Ctx) error {
 
 	c.Set("Authorization", "Bearer "+token)
 
-	return c.SendStatus(fiber.StatusOK)
+	return httpstatus.Created("created")
 }
 
 type registerUserRequest struct {

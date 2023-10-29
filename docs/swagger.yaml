@@ -1,5 +1,26 @@
 basePath: /
 definitions:
+  controllers.createRecipeRequest:
+    properties:
+      body:
+        type: string
+      description:
+        type: string
+      link:
+        type: string
+      recipe_ingredients:
+        items:
+          $ref: '#/definitions/controllers.recipeIngredientRequest'
+        type: array
+      tag_ids:
+        items:
+          type: integer
+        type: array
+      title:
+        maxLength: 255
+        minLength: 3
+        type: string
+    type: object
   controllers.loginUserRequest:
     properties:
       password:
@@ -7,10 +28,14 @@ definitions:
       username:
         type: string
     type: object
-  controllers.loginUserResponse:
+  controllers.recipeIngredientRequest:
     properties:
-      token:
-        type: string
+      ingredient_id:
+        type: integer
+      quantity:
+        type: number
+      unit_id:
+        type: integer
     type: object
   controllers.registerUserRequest:
     properties:
@@ -18,16 +43,11 @@ definitions:
         type: string
       password:
         maxLength: 72
-        minLength: 6
+        minLength: 4
         type: string
       username:
         maxLength: 255
         minLength: 3
-        type: string
-    type: object
-  controllers.registerUserResponse:
-    properties:
-      token:
         type: string
     type: object
   controllers.userProfileResponse:
@@ -71,13 +91,13 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controllers.loginUserRequest'
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/controllers.loginUserResponse'
+          headers:
+            Authorization:
+              description: Bearer <token>
+              type: string
       summary: Login user into the app
       tags:
       - Users
@@ -93,13 +113,13 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controllers.registerUserRequest'
-      produces:
-      - application/json
       responses:
         "201":
-          description: User created successfully, returns jwt token
-          schema:
-            $ref: '#/definitions/controllers.registerUserResponse'
+          description: Created
+          headers:
+            Authorization:
+              description: Bearer <token>
+              type: string
       summary: Register user in the app
       tags:
       - Users
@@ -150,10 +170,38 @@ paths:
           schema:
             $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
       security:
-      - Bearer: []
+      - ApiKeyAuth: []
       summary: Get logged in user's profile
       tags:
       - Users
+  /recipes/new:
+    post:
+      consumes:
+      - application/json
+      description: Create a new recipe with the given input data
+      parameters:
+      - description: Recipe creation data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.createRecipeRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new recipe
+      tags:
+      - Recipes
   /users/{id}:
     get:
       description: Retrieve detailed information of a user based on their ID.
@@ -184,12 +232,12 @@ paths:
           schema:
             $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
       security:
-      - Bearer: []
+      - ApiKeyAuth: []
       summary: Get user by ID
       tags:
       - Users
 securityDefinitions:
-  Bearer:
+  ApiKeyAuth:
     in: header
     name: Authorization
     type: apiKey

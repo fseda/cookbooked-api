@@ -38,7 +38,7 @@ type userProfileResponse struct {
 //	@Description	Retrieve the profile of the currently authenticated user.
 //	@ID				get-user-profile
 //	@Tags			Users
-//	@Security		Bearer
+//	@Security		ApiKeyAuth
 //	@Produce		json
 //	@Success		200	{object}	userProfileResponse
 //	@Failure		500	{object}	httpstatus.GlobalErrorHandlerResp	"Internal server error"
@@ -70,7 +70,7 @@ func (u *userController) Profile(c *fiber.Ctx) error {
 //	@Description	Retrieve detailed information of a user based on their ID.
 //	@ID				get-user-by-id
 //	@Tags			Users
-//	@Security		Bearer
+//	@Security		ApiKeyAuth
 //	@Produce		json
 //	@Param			id	path		int	true	"User ID"
 //	@Success		200	{object}	userProfileResponse

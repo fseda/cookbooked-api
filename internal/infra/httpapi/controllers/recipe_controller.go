@@ -18,6 +18,7 @@ type RecipeController interface {
 	GetRecipesByUserID(c *fiber.Ctx) error
 	GetRecipeDetails(c *fiber.Ctx) error
 	AddRecipeIngredient(c *fiber.Ctx) error
+	AddRecipeIngredients(c *fiber.Ctx) error
 	RemoveRecipeIngredient(c *fiber.Ctx) error
 }
 
@@ -33,6 +34,10 @@ type recipeIngredientRequest struct {
 	IngredientID uint    `json:"ingredient_id" validate:"required=true,number=true"`
 	UnitID       uint    `json:"unit_id" validate:"required=true,number=true"`
 	Quantity     float32 `json:"quantity" validate:"required=true"`
+}
+
+type recipeIngredientsRequest struct {
+	RecipeIngredients []*recipeIngredientRequest `json:"recipe_ingredients" validate:"required=true"`
 }
 
 type createRecipeRequest struct {
@@ -65,7 +70,7 @@ type getAllRecipesResponse struct {
 	Recipes []*getRecipeResponse `json:"recipes"`
 }
 
-// CreateRecipe godoc
+// CreateRecipe godoc 
 //	@Summary		Create a new recipe
 //	@Description	Create a new recipe with the given input data
 //	@Tags			Recipes
@@ -177,6 +182,65 @@ func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 	})
 }
 
+func (rs *recipeController) AddRecipeIngredients(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
+	userID := userClaims.UserID
+
+	recipeID, _ := c.ParamsInt("recipe_id")
+
+	var req recipeIngredientsRequest
+	if err := c.BodyParser(&req); err != nil {
+		return httpstatus.UnprocessableEntityError(globalerrors.GlobalUnableToParseBody.Error())
+	}
+
+	recipeIngredientInput := make([]*models.RecipeIngredient, len(req.RecipeIngredients))
+
+	errMsgs := validation.MyValidator.CreateErrorResponse(req)
+	for i, ri := range req.RecipeIngredients {
+		riErrMsgs := validation.MyValidator.CreateErrorResponse(ri)
+		if len(riErrMsgs) > 0 {
+			errMsgs = append(errMsgs, riErrMsgs...)
+		}
+
+		recipeIngredientInput[i] = &models.RecipeIngredient{
+			RecipeID:    uint(recipeID),
+			IngredientID: ri.IngredientID,
+			UnitID:       ri.UnitID,
+			Quantity:     ri.Quantity,
+		}
+	}
+	if len(errMsgs) > 0 {
+		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
+	}
+
+	rowsAff, err := rs.recipeService.AddRecipeIngredients(userID, uint(recipeID), recipeIngredientInput)
+	if err != nil {
+		switch {
+		case errors.Is(err, globalerrors.GlobalInternalServerError):
+			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		
+		case errors.Is(err, globalerrors.RecipeNotFound):
+			return httpstatus.NotFoundError(err.Error())
+		
+		case errors.Is(err, globalerrors.RecipeInvalidIngredient), errors.Is(err, globalerrors.RecipeInvalidUnit):
+			return httpstatus.NotFoundError(err.Error())
+		
+		case errors.Is(err, globalerrors.RecipeInvalidQuantity):
+			return httpstatus.BadRequestError(err.Error())
+		
+		case errors.Is(err, globalerrors.RecipeIngredientsMustBeUnique):
+			return httpstatus.ConflictError(err.Error())
+		
+		default:
+			return httpstatus.BadRequestError(err.Error())
+		}
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"rows_affected": rowsAff,
+	})
+}
+
 func (rc *recipeController) RemoveRecipeIngredient(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
@@ -236,7 +300,7 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := claims.UserID
 
-	recipeID, _ := c.ParamsInt("id")
+	recipeID, _ := c.ParamsInt("recipe_id")
 
 	recipe, err := rc.recipeService.FindUserRecipeByID(userID, uint(recipeID))
 	if err != nil {

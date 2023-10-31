@@ -26,6 +26,11 @@ type RecipeService interface {
 		unitID uint,
 		quantity float32,
 	) (int64, error)
+	AddRecipeIngredients(
+		userID uint,
+		recipeID uint,
+		recipeIngredients []*models.RecipeIngredient,
+	) (int64, error)
 	RemoveRecipeIngredient(userID, recipeID, ingredientID uint) (int64, error)
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
 	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
@@ -184,6 +189,74 @@ func (rs *recipeService) AddRecipeIngredient(
 			err = globalerrors.RecipeIngredientsMustBeUnique
 			return
 		}
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+
+	return rowsAff, nil
+}
+
+func (rs *recipeService) AddRecipeIngredients(
+	userID uint,
+	recipeID uint,
+	recipeIngredients []*models.RecipeIngredient,
+) (rowsAff int64, err error) {
+	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	if !exists {
+		err = globalerrors.RecipeNotFound
+		return
+	}
+
+	ingredientsIDs, unitsIDs := rs.getIDs(recipeIngredients)
+
+	if !rs.ingredientsAreUnique(ingredientsIDs) {
+		return 0, globalerrors.RecipeIngredientsMustBeUnique
+	}
+
+	exists, err = rs.ingredientRepository.ExistsAllIn(ingredientsIDs)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	if !exists {
+		err = globalerrors.RecipeInvalidIngredient
+		return
+	}
+	invalidIDs, err := rs.unitRepository.InvalidIDs(unitsIDs)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	if invalidIDs != nil {
+		err = fmt.Errorf("%w (%v)", globalerrors.RecipeInvalidUnit, invalidIDs)
+		return
+	}
+
+	recipe, err := rs.recipeRepository.FindByID(recipeID)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	for _, ingredient := range recipe.RecipeIngredients {
+		for _, recipeIngredient := range recipeIngredients {
+			if ingredient.IngredientID == recipeIngredient.IngredientID {
+				err = globalerrors.RecipeIngredientsMustBeUnique
+				return
+			}
+		}
+	}
+
+	if !rs.quantitiesAreValid(recipeIngredients) {
+		err = globalerrors.RecipeInvalidQuantity
+		return
+	}
+
+	rowsAff, err = rs.recipeIngredientRepository.LinkAll(recipeIngredients)
+	if err != nil {
 		err = globalerrors.GlobalInternalServerError
 		return
 	}

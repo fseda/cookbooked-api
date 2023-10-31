@@ -53,6 +53,10 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 		middlewares.ValidateID("recipe_id"),
 		recipeController.AddRecipeIngredient,
 	)
+	meRecipeGroup.Post(":recipe_id/ingredients/bulk",
+		middlewares.ValidateID("recipe_id"),
+		recipeController.AddRecipeIngredients,
+	)
 	meRecipeGroup.Delete(":recipe_id/ingredients/:recipe_ingredient_id",
 		middlewares.ValidateID("recipe_id"),
 		middlewares.ValidateID("recipe_ingredient_id"),

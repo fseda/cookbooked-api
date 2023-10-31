@@ -12,6 +12,7 @@ import (
 
 type RecipeIngredientRepository interface {
 	Link(recipeIngredient *models.RecipeIngredient) (int64, error)
+	LinkAll(recipeIngredients []*models.RecipeIngredient) (int64, error)
 	Unlink(recipeID, ingredientID uint) (int64, error)
 	GetIngredientsByRecipeID(recipeID uint) ([]*models.Ingredient, error)
 	GetRecipesByIngredientID(ingredientID uint) ([]*models.Recipe, error)
@@ -28,6 +29,23 @@ func NewRecipeIngredientRepository(db *gorm.DB) RecipeIngredientRepository {
 
 func (r *recipeIngredientRepository) Link(recipeIngredient *models.RecipeIngredient) (int64, error) {
 	res := r.db.Create(recipeIngredient)
+	err := res.Error
+	rowsAff := res.RowsAffected
+
+	if err != nil {
+		if pgError := err.(*pgconn.PgError); pgError != nil {
+			if pgError.Code == "23505" {
+				return rowsAff, globalerrors.RecipeIngredientsMustBeUnique
+			}
+		}
+		return rowsAff, fmt.Errorf("error linking recipe ingredient: %w", err)
+	}
+
+	return rowsAff, nil
+}
+
+func (r *recipeIngredientRepository) LinkAll(recipeIngredients []*models.RecipeIngredient) (int64, error) {
+	res := r.db.Create(&recipeIngredients)
 	err := res.Error
 	rowsAff := res.RowsAffected
 

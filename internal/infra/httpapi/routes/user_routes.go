@@ -1,6 +1,7 @@
 package routes
 
 import (
+	// "github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
 	"github.com/fseda/cookbooked-api/internal/domain/services"
@@ -29,13 +30,13 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	recipeController := controllers.NewRecipeController(recipeService)
 
 	userGroup := app.Group("users")
+	userGroup.Get("exists", userController.UserExists)
 	userGroup.Get(":id",
 		middlewares.ValidateID("id"),
 		middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey),
 		middlewares.RoleRequired(models.ADMIN),
 		userController.GetOneByID,
 	)
-	userGroup.Get("/exists", userController.ExistsOne)
 
 	meGroup := app.Group("me", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
 	meGroup.Get("", userController.Profile)

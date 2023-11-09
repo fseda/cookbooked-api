@@ -12,6 +12,8 @@ type UserService interface {
 	Create(username, email, password string) (*models.User, error)
 	Delete(id uint) (int64, error)
 	ExistsOne(username string) (bool, error)
+	UsernameExists(username string) (bool, error)
+	EmailExists(email string) (bool, error)
 }
 
 type userService struct {
@@ -71,4 +73,12 @@ func (us *userService) ExistsOne(username string) (bool, error) {
 	usernameExists, _ := us.repository.UserExists("username", username)
 	emailExists, _ := us.repository.UserExists("email", username)
 	return usernameExists || emailExists, nil
+}
+
+func (us *userService) UsernameExists(username string) (bool, error) {
+	return us.repository.UserExists("username", username)
+}
+
+func (us *userService) EmailExists(email string) (bool, error) {
+	return us.repository.UserExists("email", email)
 }

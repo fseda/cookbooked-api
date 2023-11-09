@@ -223,14 +223,19 @@ const docTemplate = `{
                     "Users"
                 ],
                 "summary": "Check if user exists",
-                "operationId": "check-user-exists",
+                "operationId": "check-user-exists-by-username-or-email",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Username",
+                        "description": "username",
                         "name": "username",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "email",
+                        "name": "email",
+                        "in": "query"
                     }
                 ],
                 "responses": {}

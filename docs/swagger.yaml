@@ -239,12 +239,15 @@ paths:
   /users/exists:
     get:
       description: Check if a user exists by their username or email.
-      operationId: check-user-exists
+      operationId: check-user-exists-by-username-or-email
       parameters:
-      - description: Username
+      - description: username
         in: query
         name: username
-        required: true
+        type: string
+      - description: email
+        in: query
+        name: email
         type: string
       produces:
       - application/json

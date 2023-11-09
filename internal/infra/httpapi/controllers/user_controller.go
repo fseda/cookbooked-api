@@ -17,6 +17,7 @@ type UserController interface {
 	ExistsOne(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
 	Profile(c *fiber.Ctx) error
+	UserExists(c *fiber.Ctx) error 
 }
 
 type userController struct {
@@ -124,16 +125,39 @@ func (u *userController) Delete(c *fiber.Ctx) error {
 	return httpstatus.OK("User deleted successfully.")
 }
 
-// ExistsOne checks if a user exists by their username or email.
-//	@Summary		Check if user exists
-//	@Description	Check if a user exists by their username or email.
-//	@ID				check-user-exists
-//	@Tags			Users
-//	@Produce		json
-//	@Param			username	query	string	true	"Username"
-//	@Router			/users/exists [get]
 func (u *userController) ExistsOne(c *fiber.Ctx) error {
 	username := c.Query("username")
 	exists, _ := u.service.ExistsOne(username)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"exists": exists})
+}
+
+// UserExists returns true if the user exists by their username or email.
+//	@Summary		Check if user exists
+//	@Description	Check if a user exists by their username or email.
+//	@ID				check-user-exists-by-username-or-email
+//	@Tags			Users
+//	@Produce		json
+//	@Param			username	query	string	false	"username"
+//	@Param			email		query	string	false	"email"
+//	@Router			/users/exists [get]
+func (u *userController) UserExists(c *fiber.Ctx) error {
+	var exists bool
+	username := c.Query("username")
+	email := c.Query("email")
+	if username == "" && email == "" {
+		return httpstatus.BadRequestError("Either username or email must be provided.")
+	}
+
+	if username != "" && email != "" {
+		return httpstatus.BadRequestError("Only one of username or email must be provided.")
+	}
+
+	if username != "" {
+		exists, _ = u.service.UsernameExists(username)
+	} 
+	if email != "" {
+		exists, _ = u.service.EmailExists(email)
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"exists": exists})
 }

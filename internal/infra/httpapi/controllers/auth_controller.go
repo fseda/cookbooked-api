@@ -95,12 +95,12 @@ func (a *authController) RegisterUser(c *fiber.Ctx) error {
 	if err != nil {
 		if err == globalerrors.UserEmailExists {
 			// msg := fmt.Sprintf("%s (%s)", globalerrors.UserEmailExists, req.Email)
-			return httpstatus.BadRequestError("username already in use")
+			return httpstatus.BadRequestError("email already in use")
 		}
 
 		if err == globalerrors.UserUsernameExists {
 			// msg := fmt.Sprintf("%s (%s)", globalerrors.UserUsernameExists, req.Username)
-			return httpstatus.BadRequestError("email already in use")
+			return httpstatus.BadRequestError("username already in use")
 		}
 
 		return httpstatus.InternalServerError(err.Error())

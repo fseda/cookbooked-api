@@ -19,5 +19,5 @@ func loadAuthRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 
 	auth.Post("/login", authController.Login)
 	auth.Post("/signup", authController.RegisterUser)
-	auth.Post("/validate", middlewares.ValidateJWT(env.Http.JWTSecretKey), authController.Validate)
+	auth.Get("/validate", middlewares.ValidateJWT(env.Http.JWTSecretKey), authController.Validate)
 }

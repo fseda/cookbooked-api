@@ -33,3 +33,19 @@ func JWTAuthMiddleware(secretKey []byte) fiber.Handler {
 		return c.Next()
 	}
 }
+
+func ValidateJWT(secretKey []byte) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tokenStr := c.Get("Authorization")
+		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
+	
+		_, err := jwtutil.ValidateToken(tokenStr, secretKey)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"valid": false,
+			})
+		}
+	
+		return c.Next()
+	}
+}

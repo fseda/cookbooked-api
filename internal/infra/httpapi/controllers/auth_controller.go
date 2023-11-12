@@ -10,9 +10,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+var singleton = false
+var controller = interface{}(nil)
+
 type AuthController interface {
 	RegisterUser(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
+	Validate(c *fiber.Ctx) error
 }
 
 type authController struct {
@@ -32,14 +36,14 @@ type loginUserResponse struct {
 	Token string `json:"token"`
 }
 
-//	@Summary		Login user into the app
-//	@Description	Logs an existing user into the app
-//	@Tags			Users
-//	@Accept			json
-//	@Param			user-credentials	body	loginUserRequest	true	"User credentials"
-//	@Success		200
-//	@Header			200	{string}	Authorization	"Bearer <token>"
-//	@Router			/auth/login [post]
+// @Summary		Login user into the app
+// @Description	Logs an existing user into the app
+// @Tags			Users
+// @Accept			json
+// @Param			user-credentials	body	loginUserRequest	true	"User credentials"
+// @Success		200
+// @Header			200	{string}	Authorization	"Bearer <token>"
+// @Router			/auth/login [post]
 func (a *authController) Login(c *fiber.Ctx) error {
 	var req loginUserRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -73,14 +77,14 @@ type registerUserRequest struct {
 	Password string `json:"password" validate:"required=true,min=4,max=72"`
 }
 
-//	@Summary		Register user in the app
-//	@Description	Registers a new user in the app
-//	@Tags			Users
-//	@Accept			json
-//	@Param			user-info	body	registerUserRequest	true	"New user credentials"
-//	@Success		201
-//	@Header			201	{string}	Authorization	"Bearer <token>"
-//	@Router			/auth/signup [post]
+// @Summary		Register user in the app
+// @Description	Registers a new user in the app
+// @Tags			Users
+// @Accept			json
+// @Param			user-info	body	registerUserRequest	true	"New user credentials"
+// @Success		201
+// @Header			201	{string}	Authorization	"Bearer <token>"
+// @Router			/auth/signup [post]
 func (a *authController) RegisterUser(c *fiber.Ctx) error {
 	var req registerUserRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -121,4 +125,21 @@ func (a *authController) RegisterUser(c *fiber.Ctx) error {
 	c.Set("Authorization", "Bearer "+token)
 
 	return httpstatus.Created("created")
+}
+
+// @Summary Validate JWT
+// @Description Validate the JWT provided in the Authorization header
+// @Tags auth
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} valid true
+// @Failure 401 {object} valid false
+// @Router /auth/validate [get]
+func (a *authController) Validate(c *fiber.Ctx) error {
+	// middleware implementation
+	// if it gets to here then the token is valid
+
+	return c.JSON(fiber.Map{
+		"valid": true,
+	})
 }

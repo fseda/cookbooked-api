@@ -31,9 +31,10 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 
 	var logLevel logger.LogLevel
 	if os.Getenv("GO_ENV") == "development" {
+		log.Info("Debugger mode enabled")
 		logLevel = logger.Info
 	} else {
-		logLevel = logger.Error
+		logLevel = logger.Silent
 	}
 
 	db, err = gorm.Open(postgres.New(postgres.Config{
@@ -46,19 +47,6 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 	}
 
 	log.Info("💾 Database connection established")
-
-	// err = db.AutoMigrate(
-	// 	models.User{},
-	// 	models.Ingredient{},
-	// 	models.RecipeIngredient{},
-	// 	models.Recipe{},
-	// 	models.RecipeTag{},
-	// 	models.Tag{},
-	// 	models.Unit{},
-	// )
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	return db, nil
 }

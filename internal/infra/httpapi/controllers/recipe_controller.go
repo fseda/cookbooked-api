@@ -52,10 +52,10 @@ type createRecipeRequest struct {
 }
 
 type updateRecipeRequest struct {
-	Title             string                     `json:"title" validate:"min=3,max=255"`
-	Description       string                     `json:"description"`
-	Body              string                     `json:"body"`
-	Link              string                     `json:"link"`
+	Title             string                     `json:"title" validate:"required=true,min=3,max=255"`
+	Description       string                     `json:"description" validate:"required=true"`
+	Body              string                     `json:"body" validate:"required=true"`
+	Link              string                     `json:"link" validate:"required=true"`
 }
 
 type getRecipeDetailsResponse struct {

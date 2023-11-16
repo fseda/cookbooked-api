@@ -56,14 +56,14 @@ type getRecipeDetailsResponse struct {
 	Body              string                     `json:"body"`
 	Link              string                     `json:"link"`
 	RecipeIngredients []*models.RecipeIngredient `json:"recipe_ingredients"`
-	RecipeTags        []*models.RecipeTag        `json:"recipe_tags"`
+	// RecipeTags        []*models.RecipeTag        `json:"recipe_tags"`
 }
 
 type getRecipeResponse struct {
 	ID          uint                `json:"id"`
 	Title       string              `json:"title"`
 	Description string              `json:"description"`
-	Tags        []*models.RecipeTag `json:"tags"`
+	// Tags        []*models.RecipeTag `json:"tags"`
 }
 
 type getAllRecipesResponse struct {
@@ -309,7 +309,7 @@ func (rc *recipeController) RemoveRecipeIngredient(c *fiber.Ctx) error {
 //	@Tags			Recipes
 //	@Produces		json
 //	@Security		ApiKeyAuth
-//	@Success		200
+//	@Success		200 {object} getAllRecipesResponse
 //	@Failure		400
 //	@Router			/recipes [get]
 func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
@@ -327,11 +327,13 @@ func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
 			ID:          recipe.ID,
 			Title:       recipe.Title,
 			Description: recipe.Description,
-			Tags:        recipe.RecipeTags,
+			// Tags:        recipe.RecipeTags,
 		}
 	}
 
-	return c.Status(fiber.StatusOK).JSON(recipesResponse)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"recipes": recipesResponse,
+	})
 }
 
 
@@ -341,7 +343,7 @@ func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
 //	@Produces		json
 //	@Param			recipe_id	path	integer	true	"Recipe ID"
 //	@Security		ApiKeyAuth
-//	@Success		200	
+//	@Success		200	{object} getRecipeDetailsResponse
 //	@Failure		400
 //	@Router			/recipes/{recipe_id} [get]
 func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
@@ -369,7 +371,7 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 		Body:              recipe.Body,
 		Link:              recipe.Link,
 		RecipeIngredients: recipe.RecipeIngredients,
-		RecipeTags:        recipe.RecipeTags,
+		// RecipeTags:        recipe.RecipeTags,
 	}
 
 	return c.Status(fiber.StatusOK).JSON(recipeDetailsResponse)

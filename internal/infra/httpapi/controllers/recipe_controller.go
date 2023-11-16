@@ -20,6 +20,8 @@ type RecipeController interface {
 	AddRecipeIngredient(c *fiber.Ctx) error
 	AddRecipeIngredients(c *fiber.Ctx) error
 	RemoveRecipeIngredient(c *fiber.Ctx) error
+	UpdateRecipe(c *fiber.Ctx) error
+	DeleteRecipe(c *fiber.Ctx) error
 }
 
 type recipeController struct {
@@ -47,6 +49,13 @@ type createRecipeRequest struct {
 	Link              string                     `json:"link"`
 	RecipeIngredients []*recipeIngredientRequest `json:"recipe_ingredients"`
 	TagIDs            []uint                     `json:"tag_ids" validate:"dive,number=true"`
+}
+
+type updateRecipeRequest struct {
+	Title             string                     `json:"title" validate:"min=3,max=255"`
+	Description       string                     `json:"description"`
+	Body              string                     `json:"body"`
+	Link              string                     `json:"link"`
 }
 
 type getRecipeDetailsResponse struct {
@@ -336,7 +345,6 @@ func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
 	})
 }
 
-
 //	@Summary		Get a recipe details
 //	@Description	Get a recipe details, by recipe id
 //	@Tags			Recipes
@@ -376,5 +384,78 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"recipe": recipeDetailsResponse,
+	})
+}
+
+//  @Summary Update recipe details
+//  @Description Update recipe details, by recipe id
+//  @Tags Recipes
+//  @Accept json
+//  @Produce json
+//  @Param recipe_id path integer true "Recipe ID"
+//  @Param input body updateRecipeRequest true "Recipe update data"
+//  @Security ApiKeyAuth
+//  @Success 200 {object} updateRecipeRequest
+//  @Failure 400 {object} httpstatus.GlobalErrorHandlerResp
+//  @Router /recipes/{recipe_id} [patch]
+func (rc *recipeController) UpdateRecipe(c *fiber.Ctx) error {
+	claims := c.Locals("user").(*jwtutil.CustomClaims)
+	userID := claims.UserID
+
+	recipeID, _ := c.ParamsInt("recipe_id")
+
+	var req updateRecipeRequest;
+	if err := c.BodyParser(&req); err != nil {
+		return httpstatus.UnprocessableEntityError(err.Error())
+	}
+
+	if errMsgs := validation.MyValidator.CreateErrorResponse(req); len(errMsgs) > 0 {
+		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
+	}
+
+	updatedRecipe, err := rc.recipeService.UpdateRecipe(
+		uint(recipeID), 
+		userID, 
+		req.Title, 
+		req.Description, 
+		req.Body, 
+		req.Link,
+	)
+	if err != nil {
+		switch err {
+		case globalerrors.GlobalInternalServerError:
+			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		case globalerrors.RecipeNotFound:
+			return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
+		default:
+			return httpstatus.BadRequestError(err.Error())
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"recipe": updatedRecipe,
+	})
+}
+
+func (rc *recipeController) DeleteRecipe(c *fiber.Ctx) error {
+	claims := c.Locals("user").(*jwtutil.CustomClaims)
+	userID := claims.UserID
+
+	recipeID, _ := c.ParamsInt("recipe_id")
+
+	rowsAff, err := rc.recipeService.DeleteRecipe(uint(recipeID), userID)
+	if err != nil {
+		switch err {
+		case globalerrors.GlobalInternalServerError:
+			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		case globalerrors.RecipeNotFound:
+			return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
+		default:
+			return httpstatus.BadRequestError(err.Error())
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"rows_affected": rowsAff,
 	})
 }

@@ -15,7 +15,9 @@ type RecipeRepository interface {
 	UserRecipeExists(userID, recipeID uint) (bool, error)
 	FindRecipesByTitleSubstring(titleSubstring string) ([]models.Recipe, error)
 	FindUserRecipesByTitleSubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
-	IsRecipeTitleTakenByUser(id uint, title string) (bool, error)
+	IsRecipeTitleTakenByUser(userID, recipeID uint, title string) (bool, error)
+	Update(recipe *models.Recipe) error
+	Delete(recipeID, userID uint) (int64, error)
 }
 
 type recipeRepository struct {
@@ -105,13 +107,29 @@ func (r *recipeRepository) FindUserRecipesByTitleSubstring(userID uint, title st
 	return recipes, nil
 }
 
-func (r *recipeRepository) IsRecipeTitleTakenByUser(userID uint, title string) (bool, error) {
+func (r *recipeRepository) IsRecipeTitleTakenByUser(userID, recipeID uint, title string) (bool, error) {
 	var recipe models.Recipe
-	if err := r.db.Where("title ILIKE ?", title).Where("user_id = ?", userID).First(&recipe).Error; err != nil {
+	if err := r.db.Where("title ILIKE ?", title).
+	Where("user_id = ?", userID).
+	Where("id <> ?", recipeID).
+	First(&recipe).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *recipeRepository) Update(recipe *models.Recipe) error {
+	return r.db.Updates(recipe).Error
+}
+
+func (r *recipeRepository) Delete(recipeID, userID uint) (int64, error) {
+	recipe := &models.Recipe{
+		Base: models.Base{ID: recipeID},
+	}
+
+	res := r.db.Where("user_id =  ?", userID).Delete(recipe)
+	return res.RowsAffected, res.Error
 }

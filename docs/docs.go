@@ -207,7 +207,10 @@ const docTemplate = `{
                 "summary": "Get all recipes from a user",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.getAllRecipesResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request"
@@ -283,7 +286,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.getRecipeDetailsResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request"
@@ -489,6 +495,57 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.getAllRecipesResponse": {
+            "type": "object",
+            "properties": {
+                "recipes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.getRecipeResponse"
+                    }
+                }
+            }
+        },
+        "controllers.getRecipeDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "recipe_ingredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.RecipeIngredient"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.getRecipeResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.loginUserRequest": {
             "type": "object",
             "properties": {
@@ -570,6 +627,134 @@ const docTemplate = `{
                 "success": {
                     "type": "boolean",
                     "example": false
+                }
+            }
+        },
+        "models.Ingredient": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/models.IngredientsCategory"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_system_ingredient": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "recipe_ingredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.RecipeIngredient"
+                    }
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.IngredientsCategory": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.RecipeIngredient": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "ingredient": {
+                    "$ref": "#/definitions/models.Ingredient"
+                },
+                "ingredient_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "recipe_id": {
+                    "type": "integer"
+                },
+                "unit": {
+                    "$ref": "#/definitions/models.Unit"
+                },
+                "unit_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.System": {
+            "type": "string",
+            "enum": [
+                "metric",
+                "farenheit"
+            ],
+            "x-enum-varnames": [
+                "METRIC",
+                "FARENHEIT"
+            ]
+        },
+        "models.Type": {
+            "type": "string",
+            "enum": [
+                "weight",
+                "volume",
+                "temperature"
+            ],
+            "x-enum-varnames": [
+                "WEIGHT",
+                "VOLUME",
+                "TEMPERATURE"
+            ]
+        },
+        "models.Unit": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "is_system_unit": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "recipeIngredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.RecipeIngredient"
+                    }
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "system": {
+                    "$ref": "#/definitions/models.System"
+                },
+                "type": {
+                    "$ref": "#/definitions/models.Type"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         }

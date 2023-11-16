@@ -21,6 +21,39 @@ definitions:
         minLength: 3
         type: string
     type: object
+  controllers.getAllRecipesResponse:
+    properties:
+      recipes:
+        items:
+          $ref: '#/definitions/controllers.getRecipeResponse'
+        type: array
+    type: object
+  controllers.getRecipeDetailsResponse:
+    properties:
+      body:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      recipe_ingredients:
+        items:
+          $ref: '#/definitions/models.RecipeIngredient'
+        type: array
+      title:
+        type: string
+    type: object
+  controllers.getRecipeResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
   controllers.loginUserRequest:
     properties:
       password:
@@ -76,6 +109,92 @@ definitions:
       success:
         example: false
         type: boolean
+    type: object
+  models.Ingredient:
+    properties:
+      category:
+        $ref: '#/definitions/models.IngredientsCategory'
+      category_id:
+        type: integer
+      icon:
+        type: string
+      id:
+        type: integer
+      is_system_ingredient:
+        type: boolean
+      name:
+        type: string
+      recipe_ingredients:
+        items:
+          $ref: '#/definitions/models.RecipeIngredient'
+        type: array
+      user_id:
+        type: integer
+    type: object
+  models.IngredientsCategory:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+    type: object
+  models.RecipeIngredient:
+    properties:
+      id:
+        type: integer
+      ingredient:
+        $ref: '#/definitions/models.Ingredient'
+      ingredient_id:
+        type: integer
+      quantity:
+        type: number
+      recipe_id:
+        type: integer
+      unit:
+        $ref: '#/definitions/models.Unit'
+      unit_id:
+        type: integer
+    type: object
+  models.System:
+    enum:
+    - metric
+    - farenheit
+    type: string
+    x-enum-varnames:
+    - METRIC
+    - FARENHEIT
+  models.Type:
+    enum:
+    - weight
+    - volume
+    - temperature
+    type: string
+    x-enum-varnames:
+    - WEIGHT
+    - VOLUME
+    - TEMPERATURE
+  models.Unit:
+    properties:
+      id:
+        type: integer
+      is_system_unit:
+        type: boolean
+      name:
+        type: string
+      recipeIngredients:
+        items:
+          $ref: '#/definitions/models.RecipeIngredient'
+        type: array
+      symbol:
+        type: string
+      system:
+        $ref: '#/definitions/models.System'
+      type:
+        $ref: '#/definitions/models.Type'
+      user_id:
+        type: integer
     type: object
 info:
   contact:
@@ -202,6 +321,8 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/controllers.getAllRecipesResponse'
         "400":
           description: Bad Request
       security:
@@ -221,6 +342,8 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/controllers.getRecipeDetailsResponse'
         "400":
           description: Bad Request
       security:

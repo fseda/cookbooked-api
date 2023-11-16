@@ -374,5 +374,7 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 		// RecipeTags:        recipe.RecipeTags,
 	}
 
-	return c.Status(fiber.StatusOK).JSON(recipeDetailsResponse)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"recipe": recipeDetailsResponse,
+	})
 }

@@ -15,10 +15,10 @@ type Type string
 type System string
 
 const (
-	WEIGHT      Type = "WEIGHT"
-	VOLUME      Type = "VOLUME"
-	TEMPERATURE Type = "TEMPERATURE"
+	WEIGHT      Type = "weight"
+	VOLUME      Type = "volume"
+	TEMPERATURE Type = "temperature"
 
-	METRIC    System = "METRIC"
-	FARENHEIT System = "FARENHEIT"
+	METRIC    System = "metric"
+	FARENHEIT System = "farenheit"
 )

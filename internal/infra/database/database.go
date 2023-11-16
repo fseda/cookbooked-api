@@ -31,7 +31,7 @@ func BootstrapDB(cfg *config.Config) (db *gorm.DB, err error) {
 
 	var logLevel logger.LogLevel
 	if os.Getenv("GO_ENV") == "development" {
-		log.Info("Debugger mode enabled")
+	log.Info("🐞 DB Debugger mode enabled")
 		logLevel = logger.Info
 	} else {
 		logLevel = logger.Silent

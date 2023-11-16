@@ -88,6 +88,31 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/validate": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Validate the JWT provided in the Authorization header",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Validate JWT",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
         "/me": {
             "get": {
                 "security": [
@@ -168,6 +193,28 @@ const docTemplate = `{
                 }
             }
         },
+        "/recipes": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all recipes from a user, by user id",
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Get all recipes from a user",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
         "/recipes/new": {
             "post": {
                 "security": [
@@ -209,6 +256,121 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/httpstatus.GlobalErrorHandlerResp"
                         }
+                    }
+                }
+            }
+        },
+        "/recipes/{recipe_id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get a recipe details, by recipe id",
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Get a recipe details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "recipe_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/recipes/{recipe_id}/ingredients": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Add multiple ingredients to a recipe, if it exists in the recipe update",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Add multiple ingredients to a recipe",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "recipe_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Recipe ingredients data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.recipeIngredientsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/recipes/{recipe_id}/ingredients/{recipe_ingredient_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Remove an ingredient from a recipe",
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Remove an ingredient from a recipe",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "recipe_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Recipe ingredient ID",
+                        "name": "recipe_ingredient_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
@@ -349,6 +511,17 @@ const docTemplate = `{
                 },
                 "unit_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "controllers.recipeIngredientsRequest": {
+            "type": "object",
+            "properties": {
+                "recipe_ingredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.recipeIngredientRequest"
+                    }
                 }
             }
         },

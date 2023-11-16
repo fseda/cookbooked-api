@@ -132,8 +132,8 @@ func (a *authController) RegisterUser(c *fiber.Ctx) error {
 //	@Tags			auth
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Success		200	{object}	valid	true
-//	@Failure		401	{object}	valid	false
+//	@Success		200	
+//	@Failure		401	
 //	@Router			/auth/validate [get]
 func (a *authController) Validate(c *fiber.Ctx) error {
 	// middleware implementation

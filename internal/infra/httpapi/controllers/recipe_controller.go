@@ -15,7 +15,7 @@ import (
 
 type RecipeController interface {
 	CreateRecipe(c *fiber.Ctx) error
-	GetRecipesByUserID(c *fiber.Ctx) error
+	GetAllRecipesByUserID(c *fiber.Ctx) error
 	GetRecipeDetails(c *fiber.Ctx) error
 	AddRecipeIngredient(c *fiber.Ctx) error
 	AddRecipeIngredients(c *fiber.Ctx) error
@@ -140,8 +140,8 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 //	@Param			input		body	recipeIngredientRequest	true	"Recipe ingredient data"
 //	@Security		ApiKeyAuth
 //	@Success		200	{object}	recipeIngredientRequest
-//	@Failure		400	{object}	httpstatus.
-//	@Router			/recipes/{recipe_id}/ingredients [post]
+//	@Failure		400 {object} httpstatus.GlobalErrorHandlerResp
+//	@Router			/recipes/{recipe_id}/ingredients [patch]
 func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
@@ -169,19 +169,19 @@ func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, globalerrors.GlobalInternalServerError):
 			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeNotFound):
 			return httpstatus.NotFoundError(err.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeInvalidIngredient), errors.Is(err, globalerrors.RecipeInvalidUnit):
 			return httpstatus.NotFoundError(err.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeInvalidQuantity):
 			return httpstatus.BadRequestError(err.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeIngredientsMustBeUnique):
 			return httpstatus.ConflictError(err.Error())
-		
+
 		default:
 			return httpstatus.BadRequestError(err.Error())
 		}
@@ -192,6 +192,17 @@ func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 	})
 }
 
+//	@Summary		Add multiple ingredients to a recipe
+//	@Description	Add multiple ingredients to a recipe, if it exists in the recipe update
+//	@Tags			Recipes
+//	@Accept			json
+//	@Produce		json
+//	@Param			recipe_id	path	integer						true	"Recipe ID"
+//	@Param			input		body	recipeIngredientsRequest	true	"Recipe ingredients data"
+//	@Security		ApiKeyAuth
+//	@Success		200
+//	@Failure		400
+//	@Router			/recipes/{recipe_id}/ingredients [patch]
 func (rs *recipeController) AddRecipeIngredients(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
@@ -213,7 +224,7 @@ func (rs *recipeController) AddRecipeIngredients(c *fiber.Ctx) error {
 		}
 
 		recipeIngredientInput[i] = &models.RecipeIngredient{
-			RecipeID:    uint(recipeID),
+			RecipeID:     uint(recipeID),
 			IngredientID: ri.IngredientID,
 			UnitID:       ri.UnitID,
 			Quantity:     ri.Quantity,
@@ -228,19 +239,19 @@ func (rs *recipeController) AddRecipeIngredients(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, globalerrors.GlobalInternalServerError):
 			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeNotFound):
 			return httpstatus.NotFoundError(err.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeInvalidIngredient), errors.Is(err, globalerrors.RecipeInvalidUnit):
 			return httpstatus.NotFoundError(err.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeInvalidQuantity):
 			return httpstatus.BadRequestError(err.Error())
-		
+
 		case errors.Is(err, globalerrors.RecipeIngredientsMustBeUnique):
 			return httpstatus.ConflictError(err.Error())
-		
+
 		default:
 			return httpstatus.BadRequestError(err.Error())
 		}
@@ -251,6 +262,15 @@ func (rs *recipeController) AddRecipeIngredients(c *fiber.Ctx) error {
 	})
 }
 
+//	@Summary		Remove an ingredient from a recipe
+//	@Description	Remove an ingredient from a recipe
+//	@Tags			Recipes
+//	@Param			recipe_id				path	integer	true	"Recipe ID"
+//	@Param			recipe_ingredient_id	path	integer	true	"Recipe ingredient ID"
+//	@Security		ApiKeyAuth
+//	@Success		200
+//	@Failure		400
+//	@Router			/recipes/{recipe_id}/ingredients/{recipe_ingredient_id} [delete]
 func (rc *recipeController) RemoveRecipeIngredient(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
@@ -284,7 +304,15 @@ func (rc *recipeController) RemoveRecipeIngredient(c *fiber.Ctx) error {
 	})
 }
 
-func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error {
+//	@Summary		Get all recipes from a user
+//	@Description	Get all recipes from a user, by user id
+//	@Tags			Recipes
+//	@Produces		json
+//	@Security		ApiKeyAuth
+//	@Success		200
+//	@Failure		400
+//	@Router			/recipes [get]
+func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
 
@@ -306,6 +334,16 @@ func (rc *recipeController) GetRecipesByUserID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(recipesResponse)
 }
 
+
+//	@Summary		Get a recipe details
+//	@Description	Get a recipe details, by recipe id
+//	@Tags			Recipes
+//	@Produces		json
+//	@Param			recipe_id	path	integer	true	"Recipe ID"
+//	@Security		ApiKeyAuth
+//	@Success		200	
+//	@Failure		400
+//	@Router			/recipes/{recipe_id} [get]
 func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := claims.UserID

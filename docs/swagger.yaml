@@ -37,6 +37,13 @@ definitions:
       unit_id:
         type: integer
     type: object
+  controllers.recipeIngredientsRequest:
+    properties:
+      recipe_ingredients:
+        items:
+          $ref: '#/definitions/controllers.recipeIngredientRequest'
+        type: array
+    type: object
   controllers.registerUserRequest:
     properties:
       email:
@@ -123,6 +130,21 @@ paths:
       summary: Register user in the app
       tags:
       - Users
+  /auth/validate:
+    get:
+      description: Validate the JWT provided in the Authorization header
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - ApiKeyAuth: []
+      summary: Validate JWT
+      tags:
+      - auth
   /me:
     delete:
       description: Delete the account of the authenticated user.
@@ -174,6 +196,92 @@ paths:
       summary: Get logged in user's profile
       tags:
       - Users
+  /recipes:
+    get:
+      description: Get all recipes from a user, by user id
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Get all recipes from a user
+      tags:
+      - Recipes
+  /recipes/{recipe_id}:
+    get:
+      description: Get a recipe details, by recipe id
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Get a recipe details
+      tags:
+      - Recipes
+  /recipes/{recipe_id}/ingredients:
+    patch:
+      consumes:
+      - application/json
+      description: Add multiple ingredients to a recipe, if it exists in the recipe
+        update
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      - description: Recipe ingredients data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.recipeIngredientsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Add multiple ingredients to a recipe
+      tags:
+      - Recipes
+  /recipes/{recipe_id}/ingredients/{recipe_ingredient_id}:
+    delete:
+      description: Remove an ingredient from a recipe
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      - description: Recipe ingredient ID
+        in: path
+        name: recipe_ingredient_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Remove an ingredient from a recipe
+      tags:
+      - Recipes
   /recipes/new:
     post:
       consumes:

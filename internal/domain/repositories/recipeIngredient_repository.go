@@ -13,6 +13,7 @@ import (
 type RecipeIngredientRepository interface {
 	Link(recipeIngredient *models.RecipeIngredient) (int64, error)
 	LinkAll(recipeIngredients []*models.RecipeIngredient) (int64, error)
+	UpdateAll(recipeIngredients []*models.RecipeIngredient) (int64, error)
 	Unlink(recipeID, ingredientID uint) (int64, error)
 	GetIngredientsByRecipeID(recipeID uint) ([]*models.Ingredient, error)
 	GetRecipesByIngredientID(ingredientID uint) ([]*models.Recipe, error)
@@ -50,12 +51,20 @@ func (r *recipeIngredientRepository) LinkAll(recipeIngredients []*models.RecipeI
 	rowsAff := res.RowsAffected
 
 	if err != nil {
-		if pgError := err.(*pgconn.PgError); pgError != nil {
-			if pgError.Code == "23505" {
-				return rowsAff, globalerrors.RecipeIngredientsMustBeUnique
-			}
-		}
 		return rowsAff, fmt.Errorf("error linking recipe ingredient: %w", err)
+	}
+
+	return rowsAff, nil
+}
+
+func (r *recipeIngredientRepository) UpdateAll(recipeIngredients []*models.RecipeIngredient) (int64, error) {
+	fmt.Println(recipeIngredients[0])
+	res := r.db.Save(&recipeIngredients)
+	err := res.Error
+	rowsAff := res.RowsAffected
+
+	if err != nil {
+		return rowsAff, fmt.Errorf("error updating recipe ingredients: %w", err)
 	}
 
 	return rowsAff, nil

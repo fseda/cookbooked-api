@@ -236,26 +236,27 @@ func (rs *recipeService) AddRecipeIngredients(
 		return
 	}
 
-	recipe, err := rs.recipeRepository.FindByID(recipeID)
-	if err != nil {
-		err = globalerrors.GlobalInternalServerError
-		return
-	}
-	for _, ingredient := range recipe.RecipeIngredients {
-		for _, recipeIngredient := range recipeIngredients {
-			if ingredient.IngredientID == recipeIngredient.IngredientID {
-				err = globalerrors.RecipeIngredientsMustBeUnique
-				return
-			}
-		}
-	}
-
 	if !rs.quantitiesAreValid(recipeIngredients) {
 		err = globalerrors.RecipeInvalidQuantity
 		return
 	}
 
-	rowsAff, err = rs.recipeIngredientRepository.LinkAll(recipeIngredients)
+	recipe, err := rs.recipeRepository.FindByID(recipeID)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+
+	for _, ingredient := range recipe.RecipeIngredients {
+		for ri, recipeIngredient := range recipeIngredients {
+			if ingredient.IngredientID == recipeIngredient.IngredientID {
+				recipeIngredients[ri].ID = ingredient.ID
+				break
+			}
+		}
+	}
+
+	rowsAff, err = rs.recipeIngredientRepository.UpdateAll(recipeIngredients)
 	if err != nil {
 		err = globalerrors.GlobalInternalServerError
 		return

@@ -70,7 +70,6 @@ type getAllRecipesResponse struct {
 	Recipes []*getRecipeResponse `json:"recipes"`
 }
 
-// CreateRecipe godoc 
 //	@Summary		Create a new recipe
 //	@Description	Create a new recipe with the given input data
 //	@Tags			Recipes
@@ -132,6 +131,17 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(newRecipe)
 }
 
+//	@Summary		Add an ingredient to a recipe
+//	@Description	Add a ingredient to a recipe, if it exists in the recipe update
+//	@Tags			Recipe
+//	@Accept			json
+//	@Produce		json
+//	@Param			recipe_id	path	integer					true	"Recipe ID"
+//	@Param			input		body	recipeIngredientRequest	true	"Recipe ingredient data"
+//	@Security		ApiKeyAuth
+//	@Success		200	{object}	recipeIngredientRequest
+//	@Failure		400	{object}	httpstatus.
+//	@Router			/recipes/{recipe_id}/ingredients [post]
 func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := userClaims.UserID
@@ -177,7 +187,7 @@ func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"rows_affected": rowsAff,
 	})
 }

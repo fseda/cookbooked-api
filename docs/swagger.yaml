@@ -90,6 +90,19 @@ definitions:
         minLength: 3
         type: string
     type: object
+  controllers.updateRecipeRequest:
+    properties:
+      body:
+        type: string
+      description:
+        type: string
+      link:
+        type: string
+      title:
+        maxLength: 255
+        minLength: 3
+        type: string
+    type: object
   controllers.userProfileResponse:
     properties:
       email:
@@ -331,6 +344,32 @@ paths:
       tags:
       - Recipes
   /recipes/{recipe_id}:
+    delete:
+      description: Delete a recipe, by recipe id
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a recipe
+      tags:
+      - Recipes
     get:
       description: Get a recipe details, by recipe id
       parameters:
@@ -349,6 +388,38 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get a recipe details
+      tags:
+      - Recipes
+    patch:
+      consumes:
+      - application/json
+      description: Update recipe details, by recipe id
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      - description: Recipe update data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.updateRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.updateRecipeRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - ApiKeyAuth: []
+      summary: Update recipe details
       tags:
       - Recipes
   /recipes/{recipe_id}/ingredients:

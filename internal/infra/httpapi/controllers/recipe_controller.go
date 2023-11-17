@@ -149,7 +149,7 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 //	@Param			input		body	recipeIngredientRequest	true	"Recipe ingredient data"
 //	@Security		ApiKeyAuth
 //	@Success		200	{object}	recipeIngredientRequest
-//	@Failure		400 {object} httpstatus.GlobalErrorHandlerResp
+//	@Failure		400	{object}	httpstatus.GlobalErrorHandlerResp
 //	@Router			/recipes/{recipe_id}/ingredients [patch]
 func (rc *recipeController) AddRecipeIngredient(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*jwtutil.CustomClaims)
@@ -318,7 +318,7 @@ func (rc *recipeController) RemoveRecipeIngredient(c *fiber.Ctx) error {
 //	@Tags			Recipes
 //	@Produces		json
 //	@Security		ApiKeyAuth
-//	@Success		200 {object} getAllRecipesResponse
+//	@Success		200	{object}	getAllRecipesResponse
 //	@Failure		400
 //	@Router			/recipes [get]
 func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
@@ -351,7 +351,7 @@ func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
 //	@Produces		json
 //	@Param			recipe_id	path	integer	true	"Recipe ID"
 //	@Security		ApiKeyAuth
-//	@Success		200	{object} getRecipeDetailsResponse
+//	@Success		200	{object}	getRecipeDetailsResponse
 //	@Failure		400
 //	@Router			/recipes/{recipe_id} [get]
 func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
@@ -387,17 +387,17 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 	})
 }
 
-//  @Summary Update recipe details
-//  @Description Update recipe details, by recipe id
-//  @Tags Recipes
-//  @Accept json
-//  @Produce json
-//  @Param recipe_id path integer true "Recipe ID"
-//  @Param input body updateRecipeRequest true "Recipe update data"
-//  @Security ApiKeyAuth
-//  @Success 200 {object} updateRecipeRequest
-//  @Failure 400 {object} httpstatus.GlobalErrorHandlerResp
-//  @Router /recipes/{recipe_id} [patch]
+//	@Summary		Update recipe details
+//	@Description	Update recipe details, by recipe id
+//	@Tags			Recipes
+//	@Accept			json
+//	@Produce		json
+//	@Param			recipe_id	path	integer				true	"Recipe ID"
+//	@Param			input		body	updateRecipeRequest	true	"Recipe update data"
+//	@Security		ApiKeyAuth
+//	@Success		200	{object}	updateRecipeRequest
+//	@Failure		400	{object}	httpstatus.GlobalErrorHandlerResp
+//	@Router			/recipes/{recipe_id} [patch]
 func (rc *recipeController) UpdateRecipe(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := claims.UserID
@@ -437,6 +437,15 @@ func (rc *recipeController) UpdateRecipe(c *fiber.Ctx) error {
 	})
 }
 
+//	@Summary		Delete a recipe
+//	@Description	Delete a recipe, by recipe id
+//	@Tags			Recipes
+//	@Param			recipe_id	path	integer	true	"Recipe ID"
+//	@Security		ApiKeyAuth
+//	@Success		200	{string}	rows_affected
+//	@Failure		400	{object}	httpstatus.GlobalErrorHandlerResp
+//	@Failure		404	{object}	httpstatus.GlobalErrorHandlerResp
+//	@Router			/recipes/{recipe_id} [delete]
 func (rc *recipeController) DeleteRecipe(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwtutil.CustomClaims)
 	userID := claims.UserID

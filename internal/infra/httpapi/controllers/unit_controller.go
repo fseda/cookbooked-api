@@ -51,5 +51,5 @@ func (c *unitController) GetAllUnits(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(unitsResponse.Units)
+	return ctx.Status(fiber.StatusOK).JSON(unitsResponse)
 }

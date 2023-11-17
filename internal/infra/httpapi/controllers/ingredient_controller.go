@@ -53,5 +53,5 @@ func (c *ingredientController) GetAllIngredients(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(ingredientsResponse.Ingredients)
+	return ctx.Status(fiber.StatusOK).JSON(ingredientsResponse)
 }

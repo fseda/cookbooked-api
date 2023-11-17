@@ -54,6 +54,26 @@ definitions:
       title:
         type: string
     type: object
+  controllers.ingredientResponse:
+    properties:
+      category:
+        $ref: '#/definitions/models.IngredientsCategory'
+      category_id:
+        type: integer
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controllers.ingredientsResponse:
+    properties:
+      ingredients:
+        items:
+          $ref: '#/definitions/controllers.ingredientResponse'
+        type: array
+    type: object
   controllers.loginUserRequest:
     properties:
       password:
@@ -89,6 +109,24 @@ definitions:
         maxLength: 255
         minLength: 3
         type: string
+    type: object
+  controllers.unitResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      symbol:
+        type: string
+      type:
+        $ref: '#/definitions/models.Type'
+    type: object
+  controllers.unitsResponse:
+    properties:
+      units:
+        items:
+          $ref: '#/definitions/controllers.unitResponse'
+        type: array
     type: object
   controllers.updateRecipeRequest:
     properties:
@@ -284,9 +322,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Ingredient'
-            type: array
+            $ref: '#/definitions/controllers.ingredientsResponse'
       summary: Get all ingredients
       tags:
       - Ingredients
@@ -524,9 +560,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Unit'
-            type: array
+            $ref: '#/definitions/controllers.unitsResponse'
       summary: Get all units
       tags:
       - Units

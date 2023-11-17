@@ -33,7 +33,7 @@ type ingredientsResponse struct {
 //	@Summary		Get all ingredients
 //	@Description	Get all ingredients
 //	@Tags			Ingredients
-//	@Success		200	{object}	ingredientsResponse.Ingredients
+//	@Success		200	{object}	ingredientsResponse
 //	@Router			/ingredients [get]
 func (c *ingredientController) GetAllIngredients(ctx *fiber.Ctx) error {
 	ingredients, err := c.ingredientService.GetAllIngredients()

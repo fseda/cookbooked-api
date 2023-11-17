@@ -124,10 +124,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Ingredient"
-                            }
+                            "$ref": "#/definitions/controllers.ingredientsResponse"
                         }
                     }
                 }
@@ -503,10 +500,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Unit"
-                            }
+                            "$ref": "#/definitions/controllers.unitsResponse"
                         }
                     }
                 }
@@ -677,6 +671,37 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.ingredientResponse": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/models.IngredientsCategory"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.ingredientsResponse": {
+            "type": "object",
+            "properties": {
+                "ingredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.ingredientResponse"
+                    }
+                }
+            }
+        },
         "controllers.loginUserRequest": {
             "type": "object",
             "properties": {
@@ -728,6 +753,34 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 3
+                }
+            }
+        },
+        "controllers.unitResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/models.Type"
+                }
+            }
+        },
+        "controllers.unitsResponse": {
+            "type": "object",
+            "properties": {
+                "units": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.unitResponse"
+                    }
                 }
             }
         },

@@ -32,7 +32,7 @@ type unitsResponse struct {
 //	@Summary		Get all units
 //	@Description	Get all units
 //	@Tags			Units
-//	@Success		200	{object}	unitsResponse.Units
+//	@Success		200	{object}	unitsResponse
 //	@Router			/units [get]
 func (c *unitController) GetAllUnits(ctx *fiber.Ctx) error {
 	units, err := c.unitService.GetAllUnits()

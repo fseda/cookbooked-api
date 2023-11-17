@@ -75,7 +75,7 @@ func (ir *unitRepository) InvalidIDs(ids []uint) (invalidIDs []uint, err error) 
 
 func (ir *unitRepository) GetAllUnits() ([]models.Unit, error) {
 	var units []models.Unit
-	result := ir.db.Find(&units)
+	result := ir.db.Select("id", "name", "symbol", "type", "system").Find(&units)
 	if result.Error != nil {
 		return nil, result.Error
 	}

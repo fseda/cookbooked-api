@@ -113,6 +113,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/ingredients": {
+            "get": {
+                "description": "Get all ingredients",
+                "tags": [
+                    "Ingredients"
+                ],
+                "summary": "Get all ingredients",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Ingredient"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/me": {
             "get": {
                 "security": [
@@ -468,6 +488,26 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/units": {
+            "get": {
+                "description": "Get all units",
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Get all units",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Unit"
+                            }
+                        }
                     }
                 }
             }

@@ -277,6 +277,19 @@ paths:
       summary: Validate JWT
       tags:
       - auth
+  /ingredients:
+    get:
+      description: Get all ingredients
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Ingredient'
+            type: array
+      summary: Get all ingredients
+      tags:
+      - Ingredients
   /me:
     delete:
       description: Delete the account of the authenticated user.
@@ -504,6 +517,19 @@ paths:
       summary: Create a new recipe
       tags:
       - Recipes
+  /units:
+    get:
+      description: Get all units
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Unit'
+            type: array
+      summary: Get all units
+      tags:
+      - Units
   /users/{id}:
     get:
       description: Retrieve detailed information of a user based on their ID.

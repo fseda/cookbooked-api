@@ -17,11 +17,11 @@ func NewUnitController(unitService services.UnitService) UnitController {
 	return &unitController{unitService}
 }
 
-// @Summary Get all units
-// @Description Get all units
-// @Tags Units
-// @Success 200 {object} []models.Unit
-// @Router /units [get]
+//	@Summary		Get all units
+//	@Description	Get all units
+//	@Tags			Units
+//	@Success		200	{object}	[]models.Unit
+//	@Router			/units [get]
 func (c *unitController) GetAllUnits(ctx *fiber.Ctx) error {
 	units, err := c.unitService.GetAllUnits()
 	if err != nil {

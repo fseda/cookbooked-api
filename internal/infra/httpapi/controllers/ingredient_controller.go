@@ -17,11 +17,11 @@ func NewIngredientController(ingredientService services.IngredientService) Ingre
 	return &ingredientController{ingredientService}
 }
 
-// @Summary Get all ingredients
-// @Description Get all ingredients
-// @Tags Ingredients
-// @Success 200 {object} []models.Ingredient
-// @Router /ingredients [get]
+//	@Summary		Get all ingredients
+//	@Description	Get all ingredients
+//	@Tags			Ingredients
+//	@Success		200	{object}	[]models.Ingredient
+//	@Router			/ingredients [get]
 func (c *ingredientController) GetAllIngredients(ctx *fiber.Ctx) error {
 	ingredients, err := c.ingredientService.GetAllIngredients()
 	if err != nil {

@@ -44,7 +44,7 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 
 	meRecipeGroup := meGroup.Group("recipes")
 	meRecipeGroup.Get("",
-		recipeController.GetRecipesByUserID,
+		recipeController.GetAllRecipesByUserID,
 	)
 	meRecipeGroup.Get(":recipe_id",
 		middlewares.ValidateID("recipe_id"),

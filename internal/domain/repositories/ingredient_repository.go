@@ -13,6 +13,7 @@ type IngredientRepository interface {
 	FindByID(id uint) (*models.Ingredient, error)
 	ExistsAllIn(ids []uint) (bool, error)
 	Exists(id uint) (bool, error)
+	GetAllIngredients() ([]models.Ingredient, error)
 }
 
 type ingredientRepository struct {
@@ -47,4 +48,16 @@ func (ir *ingredientRepository) Exists(id uint) (bool, error) {
 	}
 
 	return count == 1, nil
+}
+
+func (ir *ingredientRepository) GetAllIngredients() ([]models.Ingredient, error) {
+	var ingredients []models.Ingredient
+	result := ir.db.Joins("Category").
+		Select("ingredients.id", "name", "icon", "category_id").
+		Order("name ASC").
+		Find(&ingredients)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return ingredients, nil
 }

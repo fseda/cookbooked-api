@@ -18,6 +18,33 @@ func loadRecipeRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	recipeService := services.NewRecipeService(recipeRepository, recipeIngredientRepository, ingredientRepository, unitRepository)
 	recipeController := controllers.NewRecipeController(recipeService)
 
-	recipeGroup := app.Group("/recipes")
-	recipeGroup.Post("/new", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey), recipeController.CreateRecipe)
+	recipeGroup := app.Group("recipes", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
+	recipeGroup.Post("new", recipeController.CreateRecipe)
+	recipeGroup.Get("", recipeController.GetAllRecipesByUserID)
+	recipeGroup.Get(
+		":recipe_id",
+		middlewares.ValidateID("recipe_id"),
+		recipeController.GetRecipeDetails,
+	)
+	recipeGroup.Patch(
+		":recipe_id",
+		middlewares.ValidateID("recipe_id"),
+		recipeController.UpdateRecipe,
+	)
+	recipeGroup.Delete(
+		":recipe_id",
+		middlewares.ValidateID("recipe_id"),
+		recipeController.DeleteRecipe,
+	)
+	recipeGroup.Patch(
+		":recipe_id/ingredients",
+		middlewares.ValidateID("recipe_id"),
+		recipeController.AddRecipeIngredients,
+	)
+	recipeGroup.Delete(
+		":recipe_id/ingredients/:recipe_ingredient_id",
+		middlewares.ValidateID("recipe_id"),
+		middlewares.ValidateID("recipe_ingredient_id"),
+		recipeController.RemoveRecipeIngredient,
+	)
 }

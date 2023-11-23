@@ -14,6 +14,7 @@ type UnitRepository interface {
 	ExistsAllIn(ids []uint) (bool, error)
 	Exists(id uint) (bool, error)
 	InvalidIDs(ids []uint) (invalidIDs []uint, err error)
+	GetAllUnits() ([]models.Unit, error)
 }
 
 type unitRepository struct {
@@ -70,4 +71,13 @@ func (ir *unitRepository) InvalidIDs(ids []uint) (invalidIDs []uint, err error) 
 	}
 	
 	return invalidIDs, nil
+}
+
+func (ir *unitRepository) GetAllUnits() ([]models.Unit, error) {
+	var units []models.Unit
+	result := ir.db.Select("id", "name", "symbol", "type", "system").Find(&units)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return units, nil
 }

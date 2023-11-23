@@ -1,7 +1,7 @@
 package models
 
 type Unit struct {
-	Base
+	ID                uint               `gorm:"primaryKey" json:"id"`
 	Name              string             `gorm:"column:name; size:50; not null; uniqueIndex:user_units_must_be_unique;" json:"name"`
 	Symbol            string             `gorm:"column:symbol; size:10; unique;" json:"symbol"`
 	Type              Type               `gorm:"column:type;" json:"type"`
@@ -15,10 +15,10 @@ type Type string
 type System string
 
 const (
-	WEIGHT      Type = "WEIGHT"
-	VOLUME      Type = "VOLUME"
-	TEMPERATURE Type = "TEMPERATURE"
+	WEIGHT      Type = "weight"
+	VOLUME      Type = "volume"
+	TEMPERATURE Type = "temperature"
 
-	METRIC    System = "METRIC"
-	FARENHEIT System = "FARENHEIT"
+	METRIC    System = "metric"
+	FARENHEIT System = "farenheit"
 )

@@ -21,6 +21,59 @@ definitions:
         minLength: 3
         type: string
     type: object
+  controllers.getAllRecipesResponse:
+    properties:
+      recipes:
+        items:
+          $ref: '#/definitions/controllers.getRecipeResponse'
+        type: array
+    type: object
+  controllers.getRecipeDetailsResponse:
+    properties:
+      body:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      recipe_ingredients:
+        items:
+          $ref: '#/definitions/models.RecipeIngredient'
+        type: array
+      title:
+        type: string
+    type: object
+  controllers.getRecipeResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  controllers.ingredientResponse:
+    properties:
+      category:
+        $ref: '#/definitions/models.IngredientsCategory'
+      category_id:
+        type: integer
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controllers.ingredientsResponse:
+    properties:
+      ingredients:
+        items:
+          $ref: '#/definitions/controllers.ingredientResponse'
+        type: array
+    type: object
   controllers.loginUserRequest:
     properties:
       password:
@@ -37,6 +90,13 @@ definitions:
       unit_id:
         type: integer
     type: object
+  controllers.recipeIngredientsRequest:
+    properties:
+      recipe_ingredients:
+        items:
+          $ref: '#/definitions/controllers.recipeIngredientRequest'
+        type: array
+    type: object
   controllers.registerUserRequest:
     properties:
       email:
@@ -46,6 +106,37 @@ definitions:
         minLength: 4
         type: string
       username:
+        maxLength: 255
+        minLength: 3
+        type: string
+    type: object
+  controllers.unitResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      symbol:
+        type: string
+      type:
+        $ref: '#/definitions/models.Type'
+    type: object
+  controllers.unitsResponse:
+    properties:
+      units:
+        items:
+          $ref: '#/definitions/controllers.unitResponse'
+        type: array
+    type: object
+  controllers.updateRecipeRequest:
+    properties:
+      body:
+        type: string
+      description:
+        type: string
+      link:
+        type: string
+      title:
         maxLength: 255
         minLength: 3
         type: string
@@ -69,6 +160,92 @@ definitions:
       success:
         example: false
         type: boolean
+    type: object
+  models.Ingredient:
+    properties:
+      category:
+        $ref: '#/definitions/models.IngredientsCategory'
+      category_id:
+        type: integer
+      icon:
+        type: string
+      id:
+        type: integer
+      is_system_ingredient:
+        type: boolean
+      name:
+        type: string
+      recipe_ingredients:
+        items:
+          $ref: '#/definitions/models.RecipeIngredient'
+        type: array
+      user_id:
+        type: integer
+    type: object
+  models.IngredientsCategory:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+    type: object
+  models.RecipeIngredient:
+    properties:
+      id:
+        type: integer
+      ingredient:
+        $ref: '#/definitions/models.Ingredient'
+      ingredient_id:
+        type: integer
+      quantity:
+        type: number
+      recipe_id:
+        type: integer
+      unit:
+        $ref: '#/definitions/models.Unit'
+      unit_id:
+        type: integer
+    type: object
+  models.System:
+    enum:
+    - metric
+    - farenheit
+    type: string
+    x-enum-varnames:
+    - METRIC
+    - FARENHEIT
+  models.Type:
+    enum:
+    - weight
+    - volume
+    - temperature
+    type: string
+    x-enum-varnames:
+    - WEIGHT
+    - VOLUME
+    - TEMPERATURE
+  models.Unit:
+    properties:
+      id:
+        type: integer
+      is_system_unit:
+        type: boolean
+      name:
+        type: string
+      recipeIngredients:
+        items:
+          $ref: '#/definitions/models.RecipeIngredient'
+        type: array
+      symbol:
+        type: string
+      system:
+        $ref: '#/definitions/models.System'
+      type:
+        $ref: '#/definitions/models.Type'
+      user_id:
+        type: integer
     type: object
 info:
   contact:
@@ -123,6 +300,32 @@ paths:
       summary: Register user in the app
       tags:
       - Users
+  /auth/validate:
+    get:
+      description: Validate the JWT provided in the Authorization header
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - ApiKeyAuth: []
+      summary: Validate JWT
+      tags:
+      - auth
+  /ingredients:
+    get:
+      description: Get all ingredients
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.ingredientsResponse'
+      summary: Get all ingredients
+      tags:
+      - Ingredients
   /me:
     delete:
       description: Delete the account of the authenticated user.
@@ -174,6 +377,154 @@ paths:
       summary: Get logged in user's profile
       tags:
       - Users
+  /recipes:
+    get:
+      description: Get all recipes from a user, by user id
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.getAllRecipesResponse'
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Get all recipes from a user
+      tags:
+      - Recipes
+  /recipes/{recipe_id}:
+    delete:
+      description: Delete a recipe, by recipe id
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a recipe
+      tags:
+      - Recipes
+    get:
+      description: Get a recipe details, by recipe id
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.getRecipeDetailsResponse'
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Get a recipe details
+      tags:
+      - Recipes
+    patch:
+      consumes:
+      - application/json
+      description: Update recipe details, by recipe id
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      - description: Recipe update data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.updateRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.updateRecipeRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpstatus.GlobalErrorHandlerResp'
+      security:
+      - ApiKeyAuth: []
+      summary: Update recipe details
+      tags:
+      - Recipes
+  /recipes/{recipe_id}/ingredients:
+    patch:
+      consumes:
+      - application/json
+      description: Add multiple ingredients to a recipe, if it exists in the recipe
+        update
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      - description: Recipe ingredients data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.recipeIngredientsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Add multiple ingredients to a recipe
+      tags:
+      - Recipes
+  /recipes/{recipe_id}/ingredients/{recipe_ingredient_id}:
+    delete:
+      description: Remove an ingredient from a recipe
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      - description: Recipe ingredient ID
+        in: path
+        name: recipe_ingredient_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Remove an ingredient from a recipe
+      tags:
+      - Recipes
   /recipes/new:
     post:
       consumes:
@@ -202,6 +553,17 @@ paths:
       summary: Create a new recipe
       tags:
       - Recipes
+  /units:
+    get:
+      description: Get all units
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.unitsResponse'
+      summary: Get all units
+      tags:
+      - Units
   /users/{id}:
     get:
       description: Retrieve detailed information of a user based on their ID.

@@ -35,6 +35,8 @@ type RecipeService interface {
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
 	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
 	FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
+	UpdateRecipe(recipeID, userID uint, title, description, body, link string) (*models.Recipe, error)
+	DeleteRecipe(recipeID, userID uint) (int64, error)
 }
 
 type recipeService struct {
@@ -69,7 +71,7 @@ func (rs *recipeService) CreateRecipe(
 ) (*models.Recipe, error) {
 	var err error
 
-	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, title)
+	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, 0, title)
 	if err != nil {
 		return nil, globalerrors.GlobalInternalServerError
 	}
@@ -236,26 +238,27 @@ func (rs *recipeService) AddRecipeIngredients(
 		return
 	}
 
-	recipe, err := rs.recipeRepository.FindByID(recipeID)
-	if err != nil {
-		err = globalerrors.GlobalInternalServerError
-		return
-	}
-	for _, ingredient := range recipe.RecipeIngredients {
-		for _, recipeIngredient := range recipeIngredients {
-			if ingredient.IngredientID == recipeIngredient.IngredientID {
-				err = globalerrors.RecipeIngredientsMustBeUnique
-				return
-			}
-		}
-	}
-
 	if !rs.quantitiesAreValid(recipeIngredients) {
 		err = globalerrors.RecipeInvalidQuantity
 		return
 	}
 
-	rowsAff, err = rs.recipeIngredientRepository.LinkAll(recipeIngredients)
+	recipe, err := rs.recipeRepository.FindByID(recipeID)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+
+	for _, ingredient := range recipe.RecipeIngredients {
+		for ri, recipeIngredient := range recipeIngredients {
+			if ingredient.IngredientID == recipeIngredient.IngredientID {
+				recipeIngredients[ri].ID = ingredient.ID
+				break
+			}
+		}
+	}
+
+	rowsAff, err = rs.recipeIngredientRepository.UpdateAll(recipeIngredients)
 	if err != nil {
 		err = globalerrors.GlobalInternalServerError
 		return
@@ -314,6 +317,50 @@ func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubst
 	}
 
 	return recipes, nil
+}
+
+func (rs *recipeService) UpdateRecipe(recipeID, userID uint, title, description, body, link string) (*models.Recipe, error) {
+	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
+	}
+	if !exists {
+		return nil, globalerrors.RecipeNotFound
+	}
+
+	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, recipeID, title)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
+	}
+	if isRecipeTitleTakenByUser {
+		return nil, globalerrors.RecipeTitleOfUserExists
+	}
+
+	recipe := &models.Recipe{
+		Base: models.Base{
+			ID: recipeID,
+		},
+		Title:       title,
+		Description: description,
+		Body:        body,
+		Link:        link,
+	}
+
+	err = rs.recipeRepository.Update(recipe)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
+	}
+
+	return recipe, nil
+}
+
+func (rs *recipeService) DeleteRecipe(recipeID, userID uint) (rowsAff int64, err error) {
+	rowsAff, err = rs.recipeRepository.Delete(recipeID, userID)
+	if err != nil {
+		return 0, globalerrors.GlobalInternalServerError
+	}
+
+	return rowsAff, nil
 }
 
 func (rs *recipeService) getIDs(recipeIngredients []*models.RecipeIngredient) (ingredientsIDs []uint, unitsIDs []uint) {

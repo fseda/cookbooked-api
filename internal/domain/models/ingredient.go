@@ -1,7 +1,7 @@
 package models
 
 type Ingredient struct {
-	Base
+	ID                uint               `gorm:"primaryKey" json:"id"`
 	Name               string              `gorm:"column:name; size:100; not null; uniqueIndex:user_ingredients_must_be_unique;" json:"name"`
 	Icon               string              `gorm:"column:icon; size:5;" json:"icon"`
 	IsSystemIngredient bool                `gorm:"column:is_system_ingredient; default:false; not null; uniqueIndex:user_ingredients_must_be_unique;" json:"is_system_ingredient"`
@@ -12,7 +12,7 @@ type Ingredient struct {
 }
 
 type IngredientsCategory struct {
-	Base
+	ID                uint               `gorm:"primaryKey" json:"id"`
 	Category    string `gorm:"column:category; size:100; unique; not null;" json:"category"`
 	Description string `gorm:"column:description; type:text" json:"description"`
 }

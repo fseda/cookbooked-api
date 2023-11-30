@@ -475,8 +475,8 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Add multiple ingredients to a recipe, if it exists in the recipe
-        update
+      description: Set multiple ingredients to a recipe, completely replace the ingredients
+        of a recipe (recommended)
       parameters:
       - description: Recipe ID
         in: path
@@ -498,7 +498,7 @@ paths:
           description: Bad Request
       security:
       - ApiKeyAuth: []
-      summary: Add multiple ingredients to a recipe
+      summary: Set multiple ingredients to a recipe
       tags:
       - Recipes
   /recipes/{recipe_id}/ingredients/{recipe_ingredient_id}:
@@ -523,6 +523,36 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Remove an ingredient from a recipe
+      tags:
+      - Recipes
+  /recipes/{recipe_id}/ingredients/add:
+    patch:
+      consumes:
+      - application/json
+      description: Add multiple ingredients to a recipe, if it exists in the recipe
+        update
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: recipe_id
+        required: true
+        type: integer
+      - description: Recipe ingredients data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.recipeIngredientsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - ApiKeyAuth: []
+      summary: Add multiple ingredients to a recipe
       tags:
       - Recipes
   /recipes/new:

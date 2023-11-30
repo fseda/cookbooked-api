@@ -14,7 +14,10 @@ type RecipeIngredientRepository interface {
 	Link(recipeIngredient *models.RecipeIngredient) (int64, error)
 	LinkAll(recipeIngredients []*models.RecipeIngredient) (int64, error)
 	UpdateAll(recipeIngredients []*models.RecipeIngredient) (int64, error)
+	Set(recipeID uint, recipeIngredient []*models.RecipeIngredient) (int64, error)
 	Unlink(recipeID, ingredientID uint) (int64, error)
+	UnlinkAll(recipeID uint, ingredientsID []uint) (int64, error)
+	UnlinkAllNot(recipeID uint, ingredientsID []uint) (int64, error)
 	GetIngredientsByRecipeID(recipeID uint) ([]*models.Ingredient, error)
 	GetRecipesByIngredientID(ingredientID uint) ([]*models.Recipe, error)
 	GetUserRecipesByIngredientID(userID, ingredientID uint) ([]*models.Recipe, error)
@@ -58,10 +61,28 @@ func (r *recipeIngredientRepository) LinkAll(recipeIngredients []*models.RecipeI
 }
 
 func (r *recipeIngredientRepository) UpdateAll(recipeIngredients []*models.RecipeIngredient) (int64, error) {
-	fmt.Println(recipeIngredients[0])
 	res := r.db.Save(&recipeIngredients)
 	err := res.Error
 	rowsAff := res.RowsAffected
+
+	if err != nil {
+		return rowsAff, fmt.Errorf("error updating recipe ingredients: %w", err)
+	}
+
+	return rowsAff, nil
+}
+
+func (r *recipeIngredientRepository) Set(recipeID uint, recipeIngredients []*models.RecipeIngredient) (int64, error) {
+	// delete all ingredients not present in recipeIngredients
+	rowsAff, _ := r.UnlinkAllNot(recipeID, extractIDs(recipeIngredients))
+
+	if len(recipeIngredients) == 0 {
+		return rowsAff, nil
+	}
+
+	res := r.db.Save(&recipeIngredients)
+	err := res.Error
+	rowsAff += res.RowsAffected
 
 	if err != nil {
 		return rowsAff, fmt.Errorf("error updating recipe ingredients: %w", err)
@@ -80,6 +101,46 @@ func (r *recipeIngredientRepository) Unlink(recipeID, ingredientID uint) (int64,
 			return rowsAff, globalerrors.RecipeIngredientNotFound
 		}
 		return rowsAff, fmt.Errorf("error unlinking recipe ingredient: %w", err)
+	}
+
+	return rowsAff, nil
+}
+
+func (r *recipeIngredientRepository) UnlinkAll(recipeID uint, ingredientsID []uint) (int64, error) {
+	res := r.db.Unscoped().Where("recipe_id = ? AND ingredient_id IN ?", recipeID, ingredientsID).Delete(&models.RecipeIngredient{})
+	err := res.Error
+	rowsAff := res.RowsAffected
+
+	if res.Error != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return rowsAff, globalerrors.RecipeIngredientNotFound
+		}
+		return rowsAff, fmt.Errorf("error unlinking recipe ingredients: %w", err)
+	}
+
+	return rowsAff, nil
+}
+
+func (r *recipeIngredientRepository) UnlinkAllNot(recipeID uint, ingredientsID []uint) (int64, error) {
+	var res *gorm.DB
+	var err error
+	var rowsAff int64
+
+	if len(ingredientsID) == 0 {
+		res = r.db.Unscoped().Where("recipe_id = ?", recipeID).Delete(&models.RecipeIngredient{})
+		err = res.Error
+		rowsAff = res.RowsAffected
+	} else {
+		res = r.db.Unscoped().Where("recipe_id = ? AND ingredient_id NOT IN ?", recipeID, ingredientsID).Delete(&models.RecipeIngredient{})
+		err = res.Error
+		rowsAff = res.RowsAffected
+	}
+
+	if res.Error != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return rowsAff, globalerrors.RecipeIngredientNotFound
+		}
+		return rowsAff, fmt.Errorf("error unlinking recipe ingredients: %w", err)
 	}
 
 	return rowsAff, nil
@@ -133,4 +194,12 @@ func (r *recipeIngredientRepository) GetUserRecipesByIngredientID(userID, ingred
 		return nil, err
 	}
 	return recipes, err
+}
+
+func extractIDs(recipeIngredients []*models.RecipeIngredient) []uint {
+	var ids []uint
+	for _, ri := range recipeIngredients {
+		ids = append(ids, ri.IngredientID)
+	}
+	return ids
 }

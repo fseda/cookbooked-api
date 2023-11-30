@@ -31,6 +31,11 @@ type RecipeService interface {
 		recipeID uint,
 		recipeIngredients []*models.RecipeIngredient,
 	) (int64, error)
+	SetRecipeIngredients(
+		userID uint,
+		recipeID uint,
+		recipeIngredients []*models.RecipeIngredient,
+	) (rowsAff int64, err error)
 	RemoveRecipeIngredient(userID, recipeID, ingredientID uint) (int64, error)
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
 	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
@@ -259,6 +264,64 @@ func (rs *recipeService) AddRecipeIngredients(
 	}
 
 	rowsAff, err = rs.recipeIngredientRepository.UpdateAll(recipeIngredients)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+
+	return rowsAff, nil
+}
+
+func (rs *recipeService) SetRecipeIngredients(
+	userID uint,
+	recipeID uint,
+	recipeIngredients []*models.RecipeIngredient,
+) (rowsAff int64, err error) {
+	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	if !exists {
+		err = globalerrors.RecipeNotFound
+		return
+	}
+
+	ingredientsIDs, unitsIDs := rs.getIDs(recipeIngredients)
+	if !rs.ingredientsAreUnique(ingredientsIDs) {
+		return 0, globalerrors.RecipeIngredientsMustBeUnique
+	}
+
+	exists, err = rs.ingredientRepository.ExistsAllIn(ingredientsIDs)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	if !exists {
+		err = globalerrors.RecipeInvalidIngredient
+		return
+	}
+	invalidIDs, err := rs.unitRepository.InvalidIDs(unitsIDs)
+	if err != nil {
+		err = globalerrors.GlobalInternalServerError
+		return
+	}
+	if invalidIDs != nil {
+		err = fmt.Errorf("%w (%v)", globalerrors.RecipeInvalidUnit, invalidIDs)
+		return
+	}
+
+	if !rs.quantitiesAreValid(recipeIngredients) {
+		err = globalerrors.RecipeInvalidQuantity
+		return
+	}
+
+	// set recipe id
+	for _, recipeIngredient := range recipeIngredients {
+		recipeIngredient.RecipeID = recipeID
+	}
+
+	rowsAff, err = rs.recipeIngredientRepository.Set(recipeID, recipeIngredients)
 	if err != nil {
 		err = globalerrors.GlobalInternalServerError
 		return

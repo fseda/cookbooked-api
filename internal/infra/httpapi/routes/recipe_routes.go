@@ -37,9 +37,14 @@ func loadRecipeRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 		recipeController.DeleteRecipe,
 	)
 	recipeGroup.Patch(
-		":recipe_id/ingredients",
+		":recipe_id/ingredients/add",
 		middlewares.ValidateID("recipe_id"),
 		recipeController.AddRecipeIngredients,
+	)
+	recipeGroup.Patch(
+		":recipe_id/ingredients",
+		middlewares.ValidateID("recipe_id"),
+		recipeController.SetRecipeIngredients,
 	)
 	recipeGroup.Delete(
 		":recipe_id/ingredients/:recipe_ingredient_id",

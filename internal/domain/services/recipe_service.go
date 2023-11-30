@@ -277,12 +277,12 @@ func (rs *recipeService) SetRecipeIngredients(
 	recipeID uint,
 	recipeIngredients []*models.RecipeIngredient,
 ) (rowsAff int64, err error) {
-	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	recipe, err := rs.recipeRepository.FindByID(recipeID)
 	if err != nil {
 		err = globalerrors.GlobalInternalServerError
 		return
 	}
-	if !exists {
+	if recipe == nil || *recipe.UserID != userID {
 		err = globalerrors.RecipeNotFound
 		return
 	}
@@ -292,7 +292,7 @@ func (rs *recipeService) SetRecipeIngredients(
 		return 0, globalerrors.RecipeIngredientsMustBeUnique
 	}
 
-	exists, err = rs.ingredientRepository.ExistsAllIn(ingredientsIDs)
+	exists, err := rs.ingredientRepository.ExistsAllIn(ingredientsIDs)
 	if err != nil {
 		err = globalerrors.GlobalInternalServerError
 		return
@@ -316,9 +316,14 @@ func (rs *recipeService) SetRecipeIngredients(
 		return
 	}
 
-	// set recipe id
-	for _, recipeIngredient := range recipeIngredients {
-		recipeIngredient.RecipeID = recipeID
+	for _, ingredient := range recipe.RecipeIngredients {
+		for ri, recipeIngredient := range recipeIngredients {
+			if ingredient.IngredientID == recipeIngredient.IngredientID {
+				recipeIngredients[ri].ID = ingredient.ID
+				break
+			}
+			recipeIngredients[ri].RecipeID = recipeID
+		}
 	}
 
 	rowsAff, err = rs.recipeIngredientRepository.Set(recipeID, recipeIngredients)

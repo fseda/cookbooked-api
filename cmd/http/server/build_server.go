@@ -36,7 +36,9 @@ func BuildServer(env *config.Config) (*fiber.App, func(), error) {
 }
 
 func loadGlobalMiddleware(app *fiber.App) {
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "https://cookbooked-web-deploy.up.railway.app",
+	}))
 	app.Use(logger.New())
 	app.Use(helmet.New())
 	app.Use(idempotency.New())

@@ -388,13 +388,13 @@ func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubst
 }
 
 func (rs *recipeService) UpdateRecipe(recipeID, userID uint, title, description, body, link string) (*models.Recipe, error) {
-	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
-	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
-	}
-	if !exists {
-		return nil, globalerrors.RecipeNotFound
-	}
+	// exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	// if err != nil {
+	// 	return nil, globalerrors.GlobalInternalServerError
+	// }
+	// if !exists {
+	// 	return nil, globalerrors.RecipeNotFound
+	// }
 
 	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, recipeID, title)
 	if err != nil {

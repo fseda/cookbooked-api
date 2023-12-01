@@ -54,7 +54,7 @@ func (r *recipeRepository) FindByID(id uint) (*models.Recipe, error) {
 		Preload("RecipeTags").
 		Preload("RecipeIngredients").
 		Preload("RecipeIngredients.Ingredient").
-		Preload("RecipeIngredients.Ingredient.Category").
+		// Preload("RecipeIngredients.Ingredient.Category").
 		Preload("RecipeIngredients.Unit").
 		First(&recipe, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -67,7 +67,7 @@ func (r *recipeRepository) FindByID(id uint) (*models.Recipe, error) {
 
 func (r *recipeRepository) Exists(id uint) (bool, error) {
 	var count int64
-	res := r.db.Table("recipes").Select("id").Where("id = ?", id).Count(&count)
+	res := r.db.Table("recipes").Select("id").Where("id = ? AND deleted_at IS NULL", id).Count(&count)
 	if res.Error != nil {
 		return false, res.Error
 	}
@@ -112,6 +112,7 @@ func (r *recipeRepository) IsRecipeTitleTakenByUser(userID, recipeID uint, title
 	if err := r.db.Where("title ILIKE ?", title).
 		Where("user_id = ?", userID).
 		Where("id <> ?", recipeID).
+		Where("deleted_at IS NULL").
 		First(&recipe).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil

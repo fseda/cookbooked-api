@@ -77,7 +77,7 @@ func (r *recipeRepository) Exists(id uint) (bool, error) {
 
 func (r *recipeRepository) UserRecipeExists(userID, recipeID uint) (bool, error) {
 	var count int64
-	res := r.db.Table("recipes").Select("id").Where("id = ? AND user_id = ?", recipeID, userID).Count(&count)
+	res := r.db.Table("recipes").Select("id").Where("id = ? AND user_id = ? AND deleted_at IS NULL", recipeID, userID).Count(&count)
 	if res.Error != nil {
 		return false, res.Error
 	}
@@ -110,9 +110,9 @@ func (r *recipeRepository) FindUserRecipesByTitleSubstring(userID uint, title st
 func (r *recipeRepository) IsRecipeTitleTakenByUser(userID, recipeID uint, title string) (bool, error) {
 	var recipe models.Recipe
 	if err := r.db.Where("title ILIKE ?", title).
-	Where("user_id = ?", userID).
-	Where("id <> ?", recipeID).
-	First(&recipe).Error; err != nil {
+		Where("user_id = ?", userID).
+		Where("id <> ?", recipeID).
+		First(&recipe).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
@@ -122,7 +122,7 @@ func (r *recipeRepository) IsRecipeTitleTakenByUser(userID, recipeID uint, title
 }
 
 func (r *recipeRepository) Update(recipe *models.Recipe) error {
-	return r.db.Updates(recipe).Error
+	return r.db.Updates(recipe).Joins("RecipeIngredients").Error
 }
 
 func (r *recipeRepository) Delete(recipeID, userID uint) (int64, error) {

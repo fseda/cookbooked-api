@@ -419,7 +419,9 @@ func (rs *recipeService) UpdateRecipe(recipeID, userID uint, title, description,
 		return nil, globalerrors.GlobalInternalServerError
 	}
 
-	return recipe, nil
+	updatedRecipe, err := rs.recipeRepository.FindByID(recipeID)
+
+	return updatedRecipe, nil
 }
 
 func (rs *recipeService) DeleteRecipe(recipeID, userID uint) (rowsAff int64, err error) {

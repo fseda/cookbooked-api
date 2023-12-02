@@ -138,7 +138,9 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(newRecipe)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"recipe": newRecipe,
+	})
 }
 
 //	@Summary		Add an ingredient to a recipe

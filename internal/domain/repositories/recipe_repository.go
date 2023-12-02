@@ -131,6 +131,6 @@ func (r *recipeRepository) Delete(recipeID, userID uint) (int64, error) {
 		Base: models.Base{ID: recipeID},
 	}
 
-	res := r.db.Where("user_id =  ?", userID).Delete(recipe)
+	res := r.db.Unscoped().Where("user_id =  ?", userID).Delete(recipe)
 	return res.RowsAffected, res.Error
 }

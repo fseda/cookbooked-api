@@ -56,7 +56,7 @@ type updateRecipeRequest struct {
 	Title             string                     `json:"title" validate:"required=true,min=3,max=255"`
 	Description       string                     `json:"description" validate:"required=true"`
 	Body              string                     `json:"body" validate:"required=true"`
-	Link              string                     `json:"link" validate:"required=true"`
+	Link              string                     `json:"link"`
 }
 
 type getRecipeDetailsResponse struct {

@@ -18,6 +18,9 @@ func loadRecipeRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	recipeService := services.NewRecipeService(recipeRepository, recipeIngredientRepository, ingredientRepository, unitRepository)
 	recipeController := controllers.NewRecipeController(recipeService)
 
+	// Temporary solution for unauthenticated users
+	app.Group("recipe").Get(":recipe_id", middlewares.ValidateID("recipe_id"), recipeController.GetRecipeDetailsUnauth)
+
 	recipeGroup := app.Group("recipes", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
 	recipeGroup.Post("new", recipeController.CreateRecipe)
 	recipeGroup.Get("", recipeController.GetAllRecipesByUserID)

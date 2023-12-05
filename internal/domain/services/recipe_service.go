@@ -39,6 +39,7 @@ type RecipeService interface {
 	RemoveRecipeIngredient(userID, recipeID, ingredientID uint) (int64, error)
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
 	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
+	FindRecipeByID(recipeID uint) (*models.Recipe, error)
 	FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
 	UpdateRecipe(recipeID, userID uint, title, description, body, link string) (*models.Recipe, error)
 	DeleteRecipe(recipeID, userID uint) (int64, error)
@@ -378,6 +379,17 @@ func (rs *recipeService) FindUserRecipeByID(userID, recipeID uint) (*models.Reci
 	return recipe, nil
 }
 
+func (rs *recipeService) FindRecipeByID(recipeID uint) (*models.Recipe, error) {
+	recipe, err := rs.recipeRepository.FindByID(recipeID)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
+	}
+	if recipe == nil {
+		return nil, globalerrors.RecipeNotFound
+	}
+	return recipe, nil
+}
+
 func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error) {
 	recipes, err := rs.recipeRepository.FindUserRecipesByTitleSubstring(userID, titleSubstring)
 	if err != nil {
@@ -388,13 +400,13 @@ func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubst
 }
 
 func (rs *recipeService) UpdateRecipe(recipeID, userID uint, title, description, body, link string) (*models.Recipe, error) {
-	// exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
-	// if err != nil {
-	// 	return nil, globalerrors.GlobalInternalServerError
-	// }
-	// if !exists {
-	// 	return nil, globalerrors.RecipeNotFound
-	// }
+	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	if err != nil {
+		return nil, globalerrors.GlobalInternalServerError
+	}
+	if !exists {
+		return nil, globalerrors.RecipeNotFound
+	}
 
 	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, recipeID, title)
 	if err != nil {

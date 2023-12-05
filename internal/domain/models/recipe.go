@@ -7,7 +7,7 @@ type Recipe struct {
 	Body              string              `gorm:"column:body; type:text; not null;" json:"body"`
 	Link              string              `gorm:"column:link; size:500; not null;" json:"link"`
 	UserID            *uint               `gorm:"column:user_id; uniqueIndex:unique_user_id_title;" json:"user_id"`
-	RecipeTags        []*RecipeTag        `gorm:"constraint:OnDelete:CASCADE" json:"recipe_tags"`
+	RecipeTags        []*RecipeTag        `gorm:"constraint:OnDelete:CASCADE" json:"recipe_tags,omitempty"`
 	RecipeIngredients []*RecipeIngredient `gorm:"constraint:OnDelete:CASCADE" json:"recipe_ingredients,omitempty"`
 }
 

@@ -27,7 +27,6 @@
 
 -- SELECT count(*) FROM information_schema.tables WHERE table_schema = CURRENT_SCHEMA() AND table_name = 'recipe_ingredients' AND table_type = 'BASE TABLE'
 
-
 -- CREATE TABLE "recipe_ingredients" ("id" bigserial NOT NULL,"created_at" timestamptz,"updated_at" timestamptz,"deleted_at" timestamptz,"quantity" decimal NOT NULL,"recipe_id" bigint,"ingredient_id" bigint,"unit_id" bigint,PRIMARY KEY ("id"),CONSTRAINT "fk_ingredients_recipe_ingredients" FOREIGN KEY ("ingredient_id") REFERENCES "ingredients"("id") ON DELETE RESTRICT,CONSTRAINT "fk_units_recipe_ingredients" FOREIGN KEY ("unit_id") REFERENCES "units"("id") ON DELETE RESTRICT,CONSTRAINT "fk_recipes_recipe_ingredients" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("id") ON DELETE CASCADE)
 
 -- CREATE UNIQUE INDEX IF NOT EXISTS "recipe_ingredients_must_be_unique" ON "recipe_ingredients" ("recipe_id","ingredient_id")

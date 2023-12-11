@@ -1,13 +1,13 @@
 -- +goose Up
 -- +goose StatementBegin
 DO $$ BEGIN
-  CREATE TYPE unit_type AS ENUM ('weight', 'volume', 'temperature');
+  CREATE TYPE unit_type AS ENUM ('weight', 'volume', 'temperature', 'unit');
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-  CREATE TYPE unit_system AS ENUM ('metric', 'imperial');
+  CREATE TYPE unit_system AS ENUM ('metric', 'imperial', 'unit');
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
@@ -32,14 +32,15 @@ VALUES
   ('pound', 'lb', true, 1, 'weight', 'imperial'),
   ('ounce', 'oz', true, 1, 'weight', 'imperial'),
   ('celsius', '°C', true, 1, 'temperature', 'metric'),
-  ('farenheit', '°F', true, 1, 'temperature', 'imperial');
+  ('farenheit', '°F', true, 1, 'temperature', 'imperial')
+  ('unit', '', true, 1, 'unit', 'unit');
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 DELETE FROM units 
-WHERE name IN 
-('milliliter', 'liter', 'deciliter', 'teaspoon', 'tablespoon', 'fluid ounce', 'pint', 'quart', 'gallon', 'miligram', 'gram', 'kilogram', 'pound', 'ounce', 'celsius', 'farenheit') 
+WHERE 'name' IN 
+('milliliter', 'liter', 'deciliter', 'teaspoon', 'tablespoon', 'fluid ounce', 'pint', 'quart', 'gallon', 'miligram', 'gram', 'kilogram', 'pound', 'ounce', 'celsius', 'farenheit', 'unit') 
 AND is_system_unit = true;
 
 ALTER TABLE units DROP COLUMN IF EXISTS "type";

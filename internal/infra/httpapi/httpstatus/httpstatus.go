@@ -80,8 +80,13 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 		msg = e.Error()
 	}
 
+	success := false
+	if 200 <= code && code < 400 {
+		success = true
+	}
+
 	return c.Status(code).JSON(GlobalErrorHandlerResp{
-		Success: false,
+		Success: success,
 		Message: msg,
 	})
 }

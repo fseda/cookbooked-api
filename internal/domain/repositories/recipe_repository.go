@@ -54,7 +54,6 @@ func (r *recipeRepository) FindByID(id uint) (*models.Recipe, error) {
 		Preload("RecipeTags").
 		Preload("RecipeIngredients").
 		Preload("RecipeIngredients.Ingredient").
-		// Preload("RecipeIngredients.Ingredient.Category").
 		Preload("RecipeIngredients.Unit").
 		First(&recipe, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

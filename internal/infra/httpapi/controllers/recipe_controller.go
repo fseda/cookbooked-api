@@ -17,7 +17,6 @@ type RecipeController interface {
 	CreateRecipe(c *fiber.Ctx) error
 	GetAllRecipesByUserID(c *fiber.Ctx) error
 	GetRecipeDetails(c *fiber.Ctx) error
-	GetRecipeDetailsUnauth(c *fiber.Ctx) error
 	AddRecipeIngredient(c *fiber.Ctx) error
 	AddRecipeIngredients(c *fiber.Ctx) error
 	SetRecipeIngredients(c *fiber.Ctx) error
@@ -102,24 +101,15 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 
 	recipeIngredientInput := make([]*models.RecipeIngredient, len(req.RecipeIngredients))
 
-	errMsgs := validation.MyValidator.CreateErrorResponse(req)
 	for i, ri := range req.RecipeIngredients {
-		riErrMsgs := validation.MyValidator.CreateErrorResponse(ri)
-		if len(riErrMsgs) > 0 {
-			errMsgs = append(errMsgs, riErrMsgs...)
-		}
-
 		recipeIngredientInput[i] = &models.RecipeIngredient{
 			IngredientID: ri.IngredientID,
 			UnitID:       ri.UnitID,
 			Quantity:     ri.Quantity,
 		}
 	}
-	if len(errMsgs) > 0 {
-		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
-	}
 
-	newRecipe, err := rc.recipeService.CreateRecipe(
+	newRecipe, validation, err := rc.recipeService.CreateRecipe(
 		req.Title,
 		req.Description,
 		req.Body,
@@ -129,14 +119,10 @@ func (rc *recipeController) CreateRecipe(c *fiber.Ctx) error {
 		userID,
 	)
 	if err != nil {
-		switch {
-		case errors.Is(err, globalerrors.GlobalInternalServerError):
-			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-		case errors.Is(err, globalerrors.RecipeInvalidUnit), errors.Is(err, globalerrors.RecipeInvalidIngredient):
-			return httpstatus.NotFoundError(err.Error())
-		default:
-			return httpstatus.BadRequestError(err.Error())
-		}
+		return httpstatus.InternalServerError(err.Error())
+	}
+	if validation.HasErrors() {
+		return c.Status(fiber.StatusBadRequest).JSON(validation)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -401,7 +387,7 @@ func (rc *recipeController) GetAllRecipesByUserID(c *fiber.Ctx) error {
 
 	recipes, err := rc.recipeService.FindRecipesByUserID(userID)
 	if err != nil {
-		return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
+		return httpstatus.InternalServerError(err.Error())
 	}
 
 	recipesResponse := make([]*getRecipeResponse, len(recipes))
@@ -436,14 +422,10 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 
 	recipe, err := rc.recipeService.FindRecipeByID(uint(recipeID))
 	if err != nil {
-		switch err {
-		case globalerrors.GlobalInternalServerError:
-			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-		case globalerrors.RecipeNotFound:
-			return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
-		default:
-			return httpstatus.BadRequestError(err.Error())
-		}
+		return httpstatus.InternalServerError(err.Error())
+	}
+	if recipe == nil {
+		return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
 	}
 
 	canEdit := userID == *recipe.UserID
@@ -458,42 +440,10 @@ func (rc *recipeController) GetRecipeDetails(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"recipe": recipeDetailsResponse,
+		"recipe":   recipeDetailsResponse,
 		"can_edit": canEdit,
 	})
 }
-
-func (rc *recipeController) GetRecipeDetailsUnauth(c *fiber.Ctx) error {
-	recipeID, _ := c.ParamsInt("recipe_id")
-
-	recipe, err := rc.recipeService.FindRecipeByID(uint(recipeID))
-	if err != nil {
-		switch err {
-		case globalerrors.GlobalInternalServerError:
-			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-		case globalerrors.RecipeNotFound:
-			return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
-		default:
-			return httpstatus.BadRequestError(err.Error())
-		}
-	}
-
-	recipeDetailsResponse := &getRecipeDetailsResponse{
-		ID:                recipe.ID,
-		Title:             recipe.Title,
-		Description:       recipe.Description,
-		Body:              recipe.Body,
-		Link:              recipe.Link,
-		RecipeIngredients: recipe.RecipeIngredients,
-		// RecipeTags:        recipe.RecipeTags,
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"recipe": recipeDetailsResponse,
-		"can_edit": false,
-	})
-}
-
 
 // @Summary		Update recipe details
 // @Description	Update recipe details, by recipe id
@@ -517,11 +467,7 @@ func (rc *recipeController) UpdateRecipe(c *fiber.Ctx) error {
 		return httpstatus.UnprocessableEntityError(err.Error())
 	}
 
-	if errMsgs := validation.MyValidator.CreateErrorResponse(req); len(errMsgs) > 0 {
-		return httpstatus.BadRequestError(strings.Join(errMsgs, " and "))
-	}
-
-	updatedRecipe, err := rc.recipeService.UpdateRecipe(
+	updatedRecipe, validation, err := rc.recipeService.UpdateRecipe(
 		uint(recipeID),
 		userID,
 		req.Title,
@@ -530,14 +476,15 @@ func (rc *recipeController) UpdateRecipe(c *fiber.Ctx) error {
 		req.Link,
 	)
 	if err != nil {
-		switch err {
-		case globalerrors.GlobalInternalServerError:
-			return httpstatus.InternalServerError(globalerrors.GlobalInternalServerError.Error())
-		case globalerrors.RecipeNotFound:
-			return httpstatus.NotFoundError(globalerrors.RecipeNotFound.Error())
+		switch {
+		case errors.Is(err, globalerrors.RecipeNotFound):
+			return httpstatus.NotFoundError(err.Error())
 		default:
-			return httpstatus.BadRequestError(err.Error())
+			return httpstatus.InternalServerError(err.Error())
 		}
+	}
+	if validation.HasErrors() {
+		return c.Status(fiber.StatusBadRequest).JSON(validation)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

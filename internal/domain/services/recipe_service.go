@@ -464,7 +464,7 @@ func (rs *recipeService) validateRecipe(recipe models.Recipe) validationPkg.Vali
 			validation.AddError("title", errors.New("title must be shorter than 255 characters"))
 		}
 
-		isRecipeTitleTakenByUser, _ := rs.recipeRepository.IsRecipeTitleTakenByUser(*recipe.UserID, recipe.Base.ID, recipe.Title)
+		isRecipeTitleTakenByUser, _ := rs.recipeRepository.IsRecipeTitleTakenByUser(*recipe.UserID, recipe.ID, recipe.Title)
 		if isRecipeTitleTakenByUser {
 			validation.AddError("title", errors.New("title already taken"))
 		}

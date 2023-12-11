@@ -113,23 +113,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/ingredients": {
-            "get": {
-                "description": "Get all ingredients",
-                "tags": [
-                    "Ingredients"
-                ],
-                "summary": "Get all ingredients",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.ingredientsResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/me": {
             "get": {
                 "security": [
@@ -405,153 +388,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/recipes/{recipe_id}/ingredients": {
-            "patch": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Set multiple ingredients to a recipe, completely replace the ingredients of a recipe (recommended)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Recipes"
-                ],
-                "summary": "Set multiple ingredients to a recipe",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Recipe ID",
-                        "name": "recipe_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Recipe ingredients data",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.recipeIngredientsRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/recipes/{recipe_id}/ingredients/add": {
-            "patch": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Add multiple ingredients to a recipe, if it exists in the recipe update",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Recipes"
-                ],
-                "summary": "Add multiple ingredients to a recipe",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Recipe ID",
-                        "name": "recipe_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Recipe ingredients data",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.recipeIngredientsRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/recipes/{recipe_id}/ingredients/{recipe_ingredient_id}": {
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Remove an ingredient from a recipe",
-                "tags": [
-                    "Recipes"
-                ],
-                "summary": "Remove an ingredient from a recipe",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Recipe ID",
-                        "name": "recipe_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Recipe ingredient ID",
-                        "name": "recipe_ingredient_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/units": {
-            "get": {
-                "description": "Get all units",
-                "tags": [
-                    "Units"
-                ],
-                "summary": "Get all units",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.unitsResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/users/exists": {
             "get": {
                 "description": "Check if a user exists by their username or email.",
@@ -647,12 +483,6 @@ const docTemplate = `{
                 "link": {
                     "type": "string"
                 },
-                "recipe_ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.recipeIngredientRequest"
-                    }
-                },
                 "tag_ids": {
                     "type": "array",
                     "items": {
@@ -692,12 +522,6 @@ const docTemplate = `{
                 "link": {
                     "type": "string"
                 },
-                "recipe_ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.RecipeIngredient"
-                    }
-                },
                 "title": {
                     "type": "string"
                 }
@@ -717,37 +541,6 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.ingredientResponse": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "$ref": "#/definitions/models.IngredientsCategory"
-                },
-                "category_id": {
-                    "type": "integer"
-                },
-                "icon": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.ingredientsResponse": {
-            "type": "object",
-            "properties": {
-                "ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.ingredientResponse"
-                    }
-                }
-            }
-        },
         "controllers.loginUserRequest": {
             "type": "object",
             "properties": {
@@ -756,31 +549,6 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
-                }
-            }
-        },
-        "controllers.recipeIngredientRequest": {
-            "type": "object",
-            "properties": {
-                "ingredient_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "number"
-                },
-                "unit_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "controllers.recipeIngredientsRequest": {
-            "type": "object",
-            "properties": {
-                "recipe_ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.recipeIngredientRequest"
-                    }
                 }
             }
         },
@@ -799,34 +567,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 3
-                }
-            }
-        },
-        "controllers.unitResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "symbol": {
-                    "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/models.Type"
-                }
-            }
-        },
-        "controllers.unitsResponse": {
-            "type": "object",
-            "properties": {
-                "units": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.unitResponse"
-                    }
                 }
             }
         },
@@ -876,134 +616,6 @@ const docTemplate = `{
                 "success": {
                     "type": "boolean",
                     "example": false
-                }
-            }
-        },
-        "models.Ingredient": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "$ref": "#/definitions/models.IngredientsCategory"
-                },
-                "category_id": {
-                    "type": "integer"
-                },
-                "icon": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_system_ingredient": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "recipe_ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.RecipeIngredient"
-                    }
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.IngredientsCategory": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.RecipeIngredient": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "ingredient": {
-                    "$ref": "#/definitions/models.Ingredient"
-                },
-                "ingredient_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "number"
-                },
-                "recipe_id": {
-                    "type": "integer"
-                },
-                "unit": {
-                    "$ref": "#/definitions/models.Unit"
-                },
-                "unit_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.System": {
-            "type": "string",
-            "enum": [
-                "metric",
-                "farenheit"
-            ],
-            "x-enum-varnames": [
-                "METRIC",
-                "FARENHEIT"
-            ]
-        },
-        "models.Type": {
-            "type": "string",
-            "enum": [
-                "weight",
-                "volume",
-                "temperature"
-            ],
-            "x-enum-varnames": [
-                "WEIGHT",
-                "VOLUME",
-                "TEMPERATURE"
-            ]
-        },
-        "models.Unit": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "is_system_unit": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "recipeIngredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.RecipeIngredient"
-                    }
-                },
-                "symbol": {
-                    "type": "string"
-                },
-                "system": {
-                    "$ref": "#/definitions/models.System"
-                },
-                "type": {
-                    "$ref": "#/definitions/models.Type"
-                },
-                "user_id": {
-                    "type": "integer"
                 }
             }
         }

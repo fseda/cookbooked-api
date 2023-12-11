@@ -12,10 +12,7 @@ import (
 
 func loadRecipeRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	recipeRepository := repositories.NewRecipeRepository(db)
-	ingredientRepository := repositories.NewIngredientRepository(db)
-	recipeIngredientRepository := repositories.NewRecipeIngredientRepository(db)
-	unitRepository := repositories.NewUnitRepository(db)
-	recipeService := services.NewRecipeService(recipeRepository, recipeIngredientRepository, ingredientRepository, unitRepository)
+	recipeService := services.NewRecipeService(recipeRepository)
 	recipeController := controllers.NewRecipeController(recipeService)
 
 	recipeGroup := app.Group("recipes", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
@@ -35,21 +32,5 @@ func loadRecipeRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 		":recipe_id",
 		middlewares.ValidateID("recipe_id"),
 		recipeController.DeleteRecipe,
-	)
-	recipeGroup.Patch(
-		":recipe_id/ingredients/add",
-		middlewares.ValidateID("recipe_id"),
-		recipeController.AddRecipeIngredients,
-	)
-	recipeGroup.Patch(
-		":recipe_id/ingredients",
-		middlewares.ValidateID("recipe_id"),
-		recipeController.SetRecipeIngredients,
-	)
-	recipeGroup.Delete(
-		":recipe_id/ingredients/:recipe_ingredient_id",
-		middlewares.ValidateID("recipe_id"),
-		middlewares.ValidateID("recipe_ingredient_id"),
-		recipeController.RemoveRecipeIngredient,
 	)
 }

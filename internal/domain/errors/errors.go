@@ -16,15 +16,9 @@ var (
 
 	RecipeTitleOfUserExists       = errors.New("recipe title already exists for user")
 	RecipeNotFound                = errors.New("recipe not found")
-	RecipeDuplicateIngredient     = errors.New("recipe contains duplicate ingredients")
 	RecipeDuplicateTag            = errors.New("recipe contains duplicate tags")
-	RecipeInvalidIngredient       = errors.New("recipe contains invalid ingredient(s)")
-	RecipeInvalidUnit             = errors.New("recipe contains invalid unit(s)")
-	RecipeInvalidQuantity         = errors.New("recipe contains invalid quantity(ies)")
 	RecipeInvalidTag              = errors.New("recipe contains invalid tag(s)")
 	RecipeInvalidTitle            = errors.New("recipe contains invalid title")
-	RecipeIngredientsMustBeUnique = errors.New("recipe ingredients must be unique")
-	RecipeIngredientNotFound      = errors.New("recipe ingredient not found")
 
 	GlobalInternalServerError = errors.New("internal server error")
 	GlobalUnableToParseBody   = errors.New("unable to parse body")

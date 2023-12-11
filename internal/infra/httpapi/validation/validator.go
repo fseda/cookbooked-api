@@ -65,3 +65,29 @@ func (v XValidator) CreateErrorResponse(data interface{}) (errMsgs []string) {
 
 	return
 }
+
+type Validation struct {
+	Errors map[string][]string `json:"errors"`
+}
+
+func NewValidation() Validation {
+	return Validation{
+		Errors: make(map[string][]string, 0),
+	}
+}
+
+func (v *Validation) AddError(field string, err error) {
+	v.Errors[field] = append(v.Errors[field], err.Error())
+}
+
+func (v *Validation) HasErrors() bool {
+	return len(v.Errors) > 0
+}
+
+func (v *Validation) IsValid() bool {
+	return !v.HasErrors()
+}
+
+func (v *Validation) String() string {
+	return fmt.Sprintf("%v", v.Errors)
+}

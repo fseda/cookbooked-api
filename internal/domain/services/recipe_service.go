@@ -7,6 +7,7 @@ import (
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
+	validationPkg "github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
 )
 
 type RecipeService interface {
@@ -18,7 +19,7 @@ type RecipeService interface {
 		tagsIDs []uint,
 		link string,
 		userID uint,
-	) (*models.Recipe, error)
+	) (*models.Recipe, validationPkg.Validation, error)
 	AddRecipeIngredient(
 		userID uint,
 		recipeID uint,
@@ -38,10 +39,9 @@ type RecipeService interface {
 	) (rowsAff int64, err error)
 	RemoveRecipeIngredient(userID, recipeID, ingredientID uint) (int64, error)
 	FindRecipesByUserID(userID uint) ([]models.Recipe, error)
-	FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error)
 	FindRecipeByID(recipeID uint) (*models.Recipe, error)
 	FindUserRecipesTitleBySubstring(userID uint, titleSubstring string) ([]models.Recipe, error)
-	UpdateRecipe(recipeID, userID uint, title, description, body, link string) (*models.Recipe, error)
+	UpdateRecipe(recipeID, userID uint, title, description, body, link string) (recipe *models.Recipe, validation validationPkg.Validation, err error)
 	DeleteRecipe(recipeID, userID uint) (int64, error)
 }
 
@@ -74,69 +74,61 @@ func (rs *recipeService) CreateRecipe(
 	tagsIDs []uint,
 	link string,
 	userID uint,
-) (*models.Recipe, error) {
-	var err error
+) (recipe *models.Recipe, validation validationPkg.Validation, err error) {
+	validation = validationPkg.NewValidation()
 
-	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, 0, title)
-	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
-	}
-	if isRecipeTitleTakenByUser {
-		return nil, globalerrors.RecipeTitleOfUserExists
-	}
+	validation = rs.validateRecipe(models.Recipe{
+		Base: models.Base{
+			ID: 0,
+		},
+		Title:       title,
+		Description: description,
+		Body:        body,
+		UserID:      &userID,
+	})
 
 	ingredientsIDs, unitsIDs := rs.getIDs(recipeIngredients)
 
 	// check if ingredients are unique
 	if !rs.ingredientsAreUnique(ingredientsIDs) {
-		return nil, globalerrors.RecipeDuplicateIngredient
+		validation.AddError("ingredients", errors.New("ingredients must be unique"))
 	}
 
 	exists, err := rs.ingredientRepository.ExistsAllIn(ingredientsIDs)
 	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
+		return
 	}
 	if !exists {
-		return nil, globalerrors.RecipeInvalidIngredient
+		validation.AddError("ingredients", errors.New("invalid ingredients"))
 	}
 	invalidIDs, err := rs.unitRepository.InvalidIDs(unitsIDs)
 	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
+		return 
 	}
 	if invalidIDs != nil {
-		return nil, fmt.Errorf("%w (%v)", globalerrors.RecipeInvalidUnit, invalidIDs)
+		validation.AddError("units", fmt.Errorf("invalid units (%v)", invalidIDs))
 	}
 
 	// check if quantity is valid
 	if !rs.quantitiesAreValid(recipeIngredients) {
-		return nil, globalerrors.RecipeInvalidQuantity
+		validation.AddError("quantity", errors.New("invalid quantity"))
 	}
 
-	// region TODO tags
-	// recipeTagsModel := make([]*models.RecipeTag, len(tagsIDs))
-	// for i, tagID := range tagsIDs {
-	// 	// TODO: check if tag exists
-	// 	// TODO: check for duplicate tags
-	// 	recipeTagsModel[i] = &models.RecipeTag{
-	// 		TagID: tagID,
-	// 	}
-	// }
-	// endregion
+	if validation.HasErrors() {
+		return
+	}
 
-	recipe := &models.Recipe{
+	recipe = &models.Recipe{
 		Title:             title,
 		Description:       description,
 		Body:              body,
 		Link:              link,
 		UserID:            &userID,
 		RecipeIngredients: recipeIngredients,
-		// RecipeTags:        nil,
 	}
 	err = rs.recipeRepository.Create(recipe)
-	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
-	}
-	return recipe, nil
+	
+	return recipe, validation, err
 }
 
 func (rs *recipeService) AddRecipeIngredient(
@@ -363,29 +355,15 @@ func (rs *recipeService) RemoveRecipeIngredient(userID, recipeID, ingredientID u
 func (rs *recipeService) FindRecipesByUserID(userID uint) ([]models.Recipe, error) {
 	recipes, err := rs.recipeRepository.FindAllFromUser(userID)
 	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
+		return nil, err
 	}
 	return recipes, nil
-}
-
-func (rs *recipeService) FindUserRecipeByID(userID, recipeID uint) (*models.Recipe, error) {
-	recipe, err := rs.recipeRepository.FindByID(recipeID)
-	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
-	}
-	if recipe == nil || *recipe.UserID != userID {
-		return nil, globalerrors.RecipeNotFound
-	}
-	return recipe, nil
 }
 
 func (rs *recipeService) FindRecipeByID(recipeID uint) (*models.Recipe, error) {
 	recipe, err := rs.recipeRepository.FindByID(recipeID)
 	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
-	}
-	if recipe == nil {
-		return nil, globalerrors.RecipeNotFound
+		return nil, err
 	}
 	return recipe, nil
 }
@@ -399,41 +377,39 @@ func (rs *recipeService) FindUserRecipesTitleBySubstring(userID uint, titleSubst
 	return recipes, nil
 }
 
-func (rs *recipeService) UpdateRecipe(recipeID, userID uint, title, description, body, link string) (*models.Recipe, error) {
-	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
-	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
-	}
-	if !exists {
-		return nil, globalerrors.RecipeNotFound
-	}
-
-	isRecipeTitleTakenByUser, err := rs.recipeRepository.IsRecipeTitleTakenByUser(userID, recipeID, title)
-	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
-	}
-	if isRecipeTitleTakenByUser {
-		return nil, globalerrors.RecipeTitleOfUserExists
-	}
-
-	recipe := &models.Recipe{
+func (rs *recipeService) UpdateRecipe(recipeID, userID uint, title, description, body, link string) (recipe *models.Recipe, validation validationPkg.Validation, err error) {
+	recipe = &models.Recipe{
 		Base: models.Base{
 			ID: recipeID,
 		},
+		UserID:      &userID,
 		Title:       title,
 		Description: description,
 		Body:        body,
 		Link:        link,
 	}
 
+	exists, err := rs.recipeRepository.UserRecipeExists(userID, recipeID)
+	if err != nil{
+		return nil, validation, err
+	}
+	if !exists {
+		return nil, validation, globalerrors.RecipeNotFound
+	}
+
+	validation = rs.validateRecipe(*recipe)
+	if validation.HasErrors() {
+		return nil, validation, nil
+	}
+
 	err = rs.recipeRepository.Update(recipe)
 	if err != nil {
-		return nil, globalerrors.GlobalInternalServerError
+		return nil, validation, err
 	}
 
 	updatedRecipe, err := rs.recipeRepository.FindByID(recipeID)
 
-	return updatedRecipe, nil
+	return updatedRecipe, validation, err
 }
 
 func (rs *recipeService) DeleteRecipe(recipeID, userID uint) (rowsAff int64, err error) {
@@ -473,4 +449,34 @@ func (rs *recipeService) ingredientsAreUnique(ingredientsIDs []uint) bool {
 		uniqueIngredientsIDs[ingredientID] = true
 	}
 	return true
+}
+
+func (rs *recipeService) validateRecipe(recipe models.Recipe) validationPkg.Validation {
+	validation := validationPkg.NewValidation()
+
+	if recipe.Title == "" {
+		validation.AddError("title", errors.New("title is required"))
+	} else {
+		if len(recipe.Title) < 3 {
+			validation.AddError("title", errors.New("title must be longer than 2 characters"))
+		}
+		if len(recipe.Title) >= 255 {
+			validation.AddError("title", errors.New("title must be shorter than 255 characters"))
+		}
+
+		isRecipeTitleTakenByUser, _ := rs.recipeRepository.IsRecipeTitleTakenByUser(*recipe.UserID, recipe.ID, recipe.Title)
+		if isRecipeTitleTakenByUser {
+			validation.AddError("title", errors.New("title already taken"))
+		}
+	}
+
+	if recipe.Description == "" {
+		validation.AddError("description", errors.New("description is required"))
+	}
+	
+	if recipe.Body == "" {
+		validation.AddError("body", errors.New("body is required"))
+	}
+
+	return validation
 }

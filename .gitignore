@@ -8,3 +8,6 @@ tmp
 
 # vscode settings
 .vscode
+
+# Debugging
+*debug*

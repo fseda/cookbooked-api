@@ -14,20 +14,8 @@ import (
 
 func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	userRepository := repositories.NewUserRepository(db)
-	recipeRepository := repositories.NewRecipeRepository(db)
-	recipeIngredientRepository := repositories.NewRecipeIngredientRepository(db)
-	ingredientRepository := repositories.NewIngredientRepository(db)
-	unitRepository := repositories.NewUnitRepository(db)
-
 	userService := services.NewUserService(userRepository)
-	recipeService := services.NewRecipeService(recipeRepository,
-		recipeIngredientRepository,
-		ingredientRepository,
-		unitRepository,
-	)
-
 	userController := controllers.NewUserController(userService)
-	recipeController := controllers.NewRecipeController(recipeService)
 
 	userGroup := app.Group("users")
 	userGroup.Get("exists", userController.UserExists)
@@ -41,26 +29,4 @@ func loadUserRoutes(app *fiber.App, db *gorm.DB, env *config.Config) {
 	meGroup := app.Group("me", middlewares.JWTAuthMiddleware(env.Http.JWTSecretKey))
 	meGroup.Get("", userController.Profile)
 	meGroup.Get("", userController.Delete)
-
-	meRecipeGroup := meGroup.Group("recipes")
-	meRecipeGroup.Get("",
-		recipeController.GetAllRecipesByUserID,
-	)
-	meRecipeGroup.Get(":recipe_id",
-		middlewares.ValidateID("recipe_id"),
-		recipeController.GetRecipeDetails,
-	)
-	meRecipeGroup.Post(":recipe_id/ingredients",
-		middlewares.ValidateID("recipe_id"),
-		recipeController.AddRecipeIngredient,
-	)
-	meRecipeGroup.Post(":recipe_id/ingredients/bulk",
-		middlewares.ValidateID("recipe_id"),
-		recipeController.AddRecipeIngredients,
-	)
-	meRecipeGroup.Delete(":recipe_id/ingredients/:recipe_ingredient_id",
-		middlewares.ValidateID("recipe_id"),
-		middlewares.ValidateID("recipe_ingredient_id"),
-		recipeController.RemoveRecipeIngredient,
-	)
 }

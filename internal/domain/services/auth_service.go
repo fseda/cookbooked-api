@@ -7,7 +7,7 @@ import (
 	modelvalidation "github.com/fseda/cookbooked-api/internal/domain/models/validation"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
 	"github.com/fseda/cookbooked-api/internal/infra/config"
-	validationPkg "github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
+	validationPkg "github.com/fseda/cookbooked-api/internal/domain/validation"
 	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
 )

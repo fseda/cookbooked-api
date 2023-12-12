@@ -6,7 +6,7 @@ import (
 	globalerrors "github.com/fseda/cookbooked-api/internal/domain/errors"
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
-	validationPkg "github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
+	validationPkg "github.com/fseda/cookbooked-api/internal/domain/validation"
 )
 
 type RecipeService interface {

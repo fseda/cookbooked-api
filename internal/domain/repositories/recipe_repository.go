@@ -52,9 +52,6 @@ func (r *recipeRepository) FindByID(id uint) (*models.Recipe, error) {
 	var recipe models.Recipe
 	if err := r.db.
 		Preload("RecipeTags").
-		Preload("RecipeIngredients").
-		Preload("RecipeIngredients.Ingredient").
-		Preload("RecipeIngredients.Unit").
 		First(&recipe, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -122,7 +119,7 @@ func (r *recipeRepository) IsRecipeTitleTakenByUser(userID, recipeID uint, title
 }
 
 func (r *recipeRepository) Update(recipe *models.Recipe) error {
-	return r.db.Joins("RecipeIngredients").Updates(recipe).Error
+	return r.db.Updates(recipe).Error
 }
 
 func (r *recipeRepository) Delete(recipeID, userID uint) (int64, error) {

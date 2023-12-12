@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
-	modelvalidation "github.com/fseda/cookbooked-api/internal/domain/models/validation"
+	"github.com/fseda/cookbooked-api/internal/domain/validation"
 	"gorm.io/gorm"
 )
 
@@ -64,7 +64,7 @@ func (r *userRepository) FindOneForLogin(input string) (*models.User, error) {
 	var user *models.User
 	var err error
 
-	if modelvalidation.IsEmailLike(input) {
+	if validation.IsEmailLike(input) {
 		user, err = r.FindOneBy("email", input)
 		if user != nil && err == nil {
 			return user, nil

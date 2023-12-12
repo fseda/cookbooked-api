@@ -3,6 +3,7 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 )
 
 type Validation struct {
@@ -43,4 +44,10 @@ func (v Validation) ToJsonFormatted() string {
 	_4spaces := "    "
 	b, _ := json.MarshalIndent(v, "", _4spaces)
 	return string(b)
+}
+
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+
+func IsEmailLike(input string) bool {
+	return emailRegex.MatchString(input)
 }

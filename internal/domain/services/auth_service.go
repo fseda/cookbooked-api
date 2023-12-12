@@ -4,10 +4,9 @@ import (
 	"errors"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
-	modelvalidation "github.com/fseda/cookbooked-api/internal/domain/models/validation"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
-	"github.com/fseda/cookbooked-api/internal/infra/config"
 	validationPkg "github.com/fseda/cookbooked-api/internal/domain/validation"
+	"github.com/fseda/cookbooked-api/internal/infra/config"
 	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -94,7 +93,7 @@ func (as *authService) validateUserRegistration(user models.User) (validation va
 		if len(user.Username) < 3 {
 			validation.AddError("username", errors.New("username must be at least 3 characters long"))
 		}
-	
+
 		if len(user.Username) > 255 {
 			validation.AddError("username", errors.New("username must be less than 255 characters long"))
 		}
@@ -107,7 +106,7 @@ func (as *authService) validateUserRegistration(user models.User) (validation va
 	if user.Email == "" {
 		validation.AddError("email", errors.New("email is required"))
 	} else {
-		if !modelvalidation.IsEmailLike(user.Email) {
+		if !validationPkg.IsEmailLike(user.Email) {
 			validation.AddError("email", errors.New("email is invalid"))
 		}
 
@@ -122,7 +121,7 @@ func (as *authService) validateUserRegistration(user models.User) (validation va
 		if len(user.PasswordHash) < 4 {
 			validation.AddError("password", errors.New("password must be at least 4 characters long"))
 		}
-	
+
 		if len(user.PasswordHash) > 72 {
 			validation.AddError("password", errors.New("password must be less than 72 characters long"))
 		}

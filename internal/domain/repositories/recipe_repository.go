@@ -51,7 +51,6 @@ func (r *recipeRepository) FindAllFromUser(userID uint) ([]models.Recipe, error)
 func (r *recipeRepository) FindByID(id uint) (*models.Recipe, error) {
 	var recipe models.Recipe
 	if err := r.db.
-		Preload("RecipeTags").
 		First(&recipe, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

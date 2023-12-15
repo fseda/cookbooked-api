@@ -7,12 +7,13 @@ import (
 
 type User struct {
 	Base
-	Username     string       `gorm:"column:username; size:255; unique; not null;" json:"username"`
-	Email        string       `gorm:"column:email; size:255; unique; not null;" json:"email"`
-	PasswordHash string       `gorm:"column:password_hash; not null;" json:"-"`
-	Role         Role         `gorm:"column:role; default:'user'; not null;" json:"role"`
-	Recipes      []Recipe     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"recipes"`
-	Tags         []Tag        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"tags"`
+	Username     string   `gorm:"column:username; size:255; unique; not null;" json:"username"`
+	Email        string   `gorm:"column:email; size:255; unique; not null;" json:"email"`
+	PasswordHash string   `gorm:"column:password_hash; not null;" json:"-"`
+	Role         Role     `gorm:"column:role; default:'user'; not null;" json:"role"`
+	Recipes      []Recipe `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"recipes"`
+	Tags         []Tag    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"tags"`
+	GithubID     string     `gorm:"column:github_id;" json:"github_id"`
 }
 
 type Role string

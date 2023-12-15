@@ -58,6 +58,10 @@ func (as *authService) Login(username, password string) (token string, validatio
 	if err != nil {
 		return
 	}
+	if user == nil {
+		validation.AddError("user", errors.New("invalid credentials"))
+		return "", validation, nil
+	}
 
 	noMatch := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if noMatch != nil || user == nil {

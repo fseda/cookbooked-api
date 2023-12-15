@@ -10,14 +10,16 @@ import (
 
 type CustomClaims struct {
 	jwt.RegisteredClaims
-	UserID    uint   `json:"user_id"`
-	Role      string `json:"role"`
-	ExpiresAt int64  `json:"exp,omitempty"`
+	UserID      uint   `json:"user_id"`
+	AccessToken string `json:"github_id"`
+	Role        string `json:"role"`
+	ExpiresAt   int64  `json:"exp,omitempty"`
 }
 
-func GenerateToken(user *models.User, secretKey []byte) (string, error) {
+func GenerateToken(user *models.User, accessToken string, secretKey []byte) (string, error) {
 	claims := &CustomClaims{
 		UserID:    user.ID,
+		AccessToken: accessToken,
 		Role:      string(user.Role),
 		ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
 	}

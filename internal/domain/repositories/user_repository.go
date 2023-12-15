@@ -16,6 +16,7 @@ type UserRepository interface {
 	Delete(id uint) (int64, error)
 	UserExists(field string, value string) (bool, error)
 	FindOneForLogin(input string) (*models.User, error)
+	FindOneByGithubID(githubID uint) (*models.User, error)
 }
 
 type userRepository struct {
@@ -103,6 +104,19 @@ func (r *userRepository) UserExists(field string, value string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (r *userRepository) FindOneByGithubID(githubID uint) (*models.User, error) {
+	var user models.User
+	if err := r.db.Where("github_id = ?", fmt.Sprint(githubID)).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func validateSearchField(field string) bool {

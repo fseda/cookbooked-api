@@ -21,6 +21,10 @@ type Config struct {
 		ServerPort   string
 		JWTSecretKey []byte
 	}
+	Github struct {
+		ClientID     string
+		ClientSecret string
+	}
 }
 
 func NewConfig() *Config {
@@ -46,6 +50,13 @@ func NewConfig() *Config {
 		}{
 			ServerPort:   env.GetEnv("PORT"),
 			JWTSecretKey: []byte(env.GetEnv("JWT_SECRET_KEY")),
+		},
+		Github: struct {
+			ClientID     string
+			ClientSecret string
+		}{
+			ClientID:     env.GetEnv("GITHUB_CLIENT_ID"),
+			ClientSecret: env.GetEnv("GITHUB_CLIENT_SECRET"),
 		},
 	}
 

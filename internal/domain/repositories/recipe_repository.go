@@ -118,7 +118,7 @@ func (r *recipeRepository) IsRecipeTitleTakenByUser(userID, recipeID uint, title
 }
 
 func (r *recipeRepository) Update(recipe *models.Recipe) error {
-	return r.db.Joins("RecipeIngredients").Updates(recipe).Error
+	return r.db.Updates(recipe).Error
 }
 
 func (r *recipeRepository) Delete(recipeID, userID uint) (int64, error) {

@@ -9,10 +9,9 @@ import (
 	"net/http"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
-	modelvalidation "github.com/fseda/cookbooked-api/internal/domain/models/validation"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
+	validationPkg "github.com/fseda/cookbooked-api/internal/domain/validation"
 	"github.com/fseda/cookbooked-api/internal/infra/config"
-	validationPkg "github.com/fseda/cookbooked-api/internal/infra/httpapi/validation"
 	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -122,7 +121,7 @@ func (as *authService) validateUserRegistration(user models.User) (validation va
 	if user.Email == "" {
 		validation.AddError("email", errors.New("email is required"))
 	} else {
-		if !modelvalidation.IsEmailLike(user.Email) {
+		if !validationPkg.IsEmailLike(user.Email) {
 			validation.AddError("email", errors.New("email is invalid"))
 		}
 

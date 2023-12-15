@@ -11,7 +11,7 @@ ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 
 RUN go build -o http-server cmd/http/main.go
 
-RUN apk -o no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates
 
 FROM scratch
 

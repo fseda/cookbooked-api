@@ -29,13 +29,13 @@ type authService struct {
 }
 
 func NewAuthService(
-	authRepository repositories.AuthRepository, 
-	userRepository repositories.UserRepository, 
+	authRepository repositories.AuthRepository,
+	userRepository repositories.UserRepository,
 	env *config.Config,
 ) AuthService {
 	return &authService{
-		authRepository, 
-		userRepository, 
+		authRepository,
+		userRepository,
 		env,
 	}
 }
@@ -155,58 +155,30 @@ type GithubAccessTokenRequest struct {
 	Code         string `json:"code"`
 }
 
-type GithubAccessTokenResponse struct {
+type GithubAccessToken struct {
 	AccessToken string `json:"access_token"`
 	Scope       string `json:"scope"`      // "repo,gist"
 	TokenType   string `json:"token_type"` // Bearer
 }
 
 type GithubUser struct {
-	ID    uint `json:"id"`
-	Login string `json:"login"`
-	Email string `json:"email"`
+	ID       uint   `json:"id"`
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Bio      string `json:"bio"`
+	Avatar   string `json:"avatar_url"`
+	Location string `json:"location"`
 }
 
 const githubGetAccessTokenURL = "https://github.com/login/oauth/access_token"
 const githubGetUserURL = "https://api.github.com/user"
 
 func (as *authService) GithubLogin(code string) (token string, err error) {
-	accessTokenRequest, _ := json.Marshal(GithubAccessTokenRequest{
-		ClientID:     as.env.Github.ClientID,
-		ClientSecret: as.env.Github.ClientSecret,
-		Code:         code,
-	})
-	client := &http.Client{}
-
-	req, _ := http.NewRequest("POST", githubGetAccessTokenURL, bytes.NewBuffer(accessTokenRequest))
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-	tokenResp, err := client.Do(req)
+	githubUser, accessToken, err := githubFlow(as.env.Github.ClientID, as.env.Github.ClientSecret, code)
 	if err != nil {
 		return
 	}
-
-	defer tokenResp.Body.Close()
-	accessTokenBody, err := io.ReadAll(tokenResp.Body)
-	var accessTokenResponse GithubAccessTokenResponse
-	json.Unmarshal(accessTokenBody, &accessTokenResponse)
-	tokenType := accessTokenResponse.TokenType
-	accessToken := accessTokenResponse.AccessToken
-
-	req, _ = http.NewRequest("GET", githubGetUserURL, nil)
-	req.Header.Set("Authorization", tokenType+" "+accessToken)
-	userResp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-
-	defer userResp.Body.Close()
-	userBody, err := io.ReadAll(userResp.Body)
-	if err != nil {
-		return
-	}
-	var githubUser GithubUser
-	json.Unmarshal(userBody, &githubUser)
 
 	user, err := as.userRepository.FindOneByGithubID(githubUser.ID)
 	if err != nil {
@@ -217,6 +189,10 @@ func (as *authService) GithubLogin(code string) (token string, err error) {
 		newUser := models.User{
 			Username: githubUser.Login,
 			Email:    githubUser.Email,
+			Name:     githubUser.Name,
+			Bio:      githubUser.Bio,
+			Avatar:   githubUser.Avatar,
+			Location: githubUser.Location,
 			GithubID: fmt.Sprint(githubUser.ID),
 		}
 
@@ -227,7 +203,7 @@ func (as *authService) GithubLogin(code string) (token string, err error) {
 		user = &newUser
 	}
 
-	if err = as.authRepository.SaveGithubAccessToken(user.ID, accessTokenResponse.AccessToken); err != nil {
+	if err = as.authRepository.SaveGithubAccessToken(user.ID, accessToken); err != nil {
 		return
 	}
 
@@ -236,5 +212,51 @@ func (as *authService) GithubLogin(code string) (token string, err error) {
 		return
 	}
 
+	return
+}
+
+func githubFlow(clientID, clientSecret, code string) (githubUser GithubUser, accessToken string, err error) {
+	githubAccessToken, _ := json.Marshal(GithubAccessTokenRequest{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Code:         code,
+	})
+	httpClient := &http.Client{}
+
+	req, _ := http.NewRequest("POST", githubGetAccessTokenURL, bytes.NewBuffer(githubAccessToken))
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	tokenResp, err := httpClient.Do(req)
+	if err != nil {
+		return
+	}
+
+	defer tokenResp.Body.Close()
+	accessTokenBody, err := io.ReadAll(tokenResp.Body)
+	var accessTokenResponse GithubAccessToken
+	json.Unmarshal(accessTokenBody, &accessTokenResponse)
+
+	githubUser, err = getUserFromGithub(accessTokenResponse)
+	return githubUser, accessTokenResponse.AccessToken, err
+}
+
+func getUserFromGithub(githubAccessToken GithubAccessToken) (githubUser GithubUser, err error) {
+	tokenType := githubAccessToken.TokenType
+	accessToken := githubAccessToken.AccessToken
+
+	req, _ := http.NewRequest("GET", githubGetUserURL, nil)
+	req.Header.Set("Authorization", tokenType+" "+accessToken)
+	httpClient := &http.Client{}
+	userResp, err := httpClient.Do(req)
+	if err != nil {
+		return
+	}
+
+	defer userResp.Body.Close()
+	userBody, err := io.ReadAll(userResp.Body)
+	if err != nil {
+		return
+	}
+	json.Unmarshal(userBody, &githubUser)
 	return
 }

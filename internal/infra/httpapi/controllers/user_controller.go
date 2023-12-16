@@ -17,7 +17,7 @@ type UserController interface {
 	ExistsOne(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
 	Profile(c *fiber.Ctx) error
-	UserExists(c *fiber.Ctx) error 
+	UserExists(c *fiber.Ctx) error
 }
 
 type userController struct {
@@ -29,13 +29,17 @@ func NewUserController(service services.UserService) UserController {
 }
 
 type userProfileResponse struct {
-	UserID   uint   `json:"user_id"`
+	UserID   uint   `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Avatar   string `json:"avatar_url"`
+	Bio      string `json:"bio"`
+	Location string `json:"location"`
 	Role     string `json:"role"`
 }
 
-//  Profile retrieves the profile details of the authenticated user. 
+//	 Profile retrieves the profile details of the authenticated user.
 //	@Summary		Get logged in user's profile
 //	@Description	Retrieve the profile of the currently authenticated user.
 //	@ID				get-user-profile
@@ -63,11 +67,15 @@ func (u *userController) Profile(c *fiber.Ctx) error {
 		UserID:   userClaims.UserID,
 		Username: user.Username,
 		Email:    user.Email,
+		Name:     user.Name,
+		Avatar:   user.Avatar,
+		Bio:      user.Bio,
+		Location: user.Location,
 		Role:     userClaims.Role,
 	})
 }
 
-//  GetOneByID retrieves the details of a user by their ID. 
+//	 GetOneByID retrieves the details of a user by their ID.
 //	@Summary		Get user by ID
 //	@Description	Retrieve detailed information of a user based on their ID.
 //	@ID				get-user-by-id
@@ -95,7 +103,7 @@ func (u *userController) GetOneByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
-//  Delete deletes the authenticated user's account. 
+//	 Delete deletes the authenticated user's account.
 //	@Summary		Delete logged-in user's account
 //	@Description	Delete the account of the authenticated user.
 //	@ID				delete-user-by-id
@@ -132,6 +140,7 @@ func (u *userController) ExistsOne(c *fiber.Ctx) error {
 }
 
 // UserExists returns true if the user exists by their username or email.
+//
 //	@Summary		Check if user exists
 //	@Description	Check if a user exists by their username or email.
 //	@ID				check-user-exists-by-username-or-email
@@ -154,7 +163,7 @@ func (u *userController) UserExists(c *fiber.Ctx) error {
 
 	if username != "" {
 		exists, _ = u.service.UsernameExists(username)
-	} 
+	}
 	if email != "" {
 		exists, _ = u.service.EmailExists(email)
 	}

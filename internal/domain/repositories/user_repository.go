@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
-	"github.com/fseda/cookbooked-api/internal/domain/validation"
+	"github.com/fseda/cookbooked-api/internal/domain/validator"
 	"gorm.io/gorm"
 )
 
@@ -30,7 +30,43 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 var searchFields = []string{"username", "email"}
 
 func (r *userRepository) Create(user *models.User) error {
-	return r.db.Create(user).Error
+	tx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if user.Email == "" {
+		tx.Omit("email")
+	}
+
+	if user.Avatar == "" {
+		tx.Omit("avatar_url")
+	}
+
+	if user.Name == "" {
+		tx.Omit("name")
+	}
+
+	if user.Bio == "" {
+		tx.Omit("bio")
+	}
+
+	if user.Location == "" {
+		tx.Omit("location")
+	}
+
+	if user.GithubID == "" {
+		tx.Omit("github_id")
+	}
+
+	if err := tx.Create(user).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 func (r *userRepository) FindOneById(id uint) (*models.User, error) {
@@ -65,7 +101,7 @@ func (r *userRepository) FindOneForLogin(input string) (*models.User, error) {
 	var user *models.User
 	var err error
 
-	if validation.IsEmailLike(input) {
+	if validator.IsEmailLike(input) {
 		user, err = r.FindOneBy("email", input)
 		if user != nil && err == nil {
 			return user, nil

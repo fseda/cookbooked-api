@@ -1,25 +1,21 @@
 package services
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
-	validationPkg "github.com/fseda/cookbooked-api/internal/domain/validation"
+	"github.com/fseda/cookbooked-api/internal/domain/validator"
 	"github.com/fseda/cookbooked-api/internal/infra/config"
 	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
-	Login(username, password string) (token string, validation validationPkg.Validation, err error)
-	Create(username, email, password string) (user *models.User, validation validationPkg.Validation, err error)
-	GithubLogin(code string) (token string, err error)
+	Login(username, password string) (token string, validation validator.Validation, err error)
+	Create(username, email, password string) (user *models.User, validation validator.Validation, err error)
+	GithubLogin(code string) (token string, validation validator.Validation, err error)
 }
 
 type authService struct {
@@ -40,10 +36,10 @@ func NewAuthService(
 	}
 }
 
-func (as *authService) Login(username, password string) (token string, validation validationPkg.Validation, err error) {
+func (as *authService) Login(username, password string) (token string, validation validator.Validation, err error) {
 	var user *models.User
 
-	validation = validationPkg.NewValidation()
+	validation = validator.NewValidation()
 	if username == "" {
 		validation.AddError("username", errors.New("username is required"))
 	}
@@ -77,7 +73,7 @@ func (as *authService) Login(username, password string) (token string, validatio
 	return
 }
 
-func (as *authService) Create(username, email, password string) (*models.User, validationPkg.Validation, error) {
+func (as *authService) Create(username, email, password string) (*models.User, validator.Validation, error) {
 	user := models.User{
 		Username:     username,
 		Email:        email,
@@ -103,8 +99,8 @@ func (as *authService) Create(username, email, password string) (*models.User, v
 	return &user, validation, nil
 }
 
-func (as *authService) validateUserRegistration(user models.User) (validation validationPkg.Validation) {
-	validation = validationPkg.NewValidation()
+func (as *authService) validateUserRegistration(user models.User) (validation validator.Validation) {
+	validation = validator.NewValidation()
 
 	if user.Username == "" {
 		validation.AddError("username", errors.New("username is required"))
@@ -125,7 +121,7 @@ func (as *authService) validateUserRegistration(user models.User) (validation va
 	if user.Email == "" {
 		validation.AddError("email", errors.New("email is required"))
 	} else {
-		if !validationPkg.IsEmailLike(user.Email) {
+		if !validator.IsEmailLike(user.Email) {
 			validation.AddError("email", errors.New("email is invalid"))
 		}
 
@@ -156,9 +152,15 @@ type GithubAccessTokenRequest struct {
 }
 
 type GithubAccessToken struct {
+	ErrorResponse
 	AccessToken string `json:"access_token"`
 	Scope       string `json:"scope"`      // "repo,gist"
 	TokenType   string `json:"token_type"` // Bearer
+}
+
+type ErrorResponse struct {
+	Message string `json:"error_description"`
+	Error   string `json:"error"`
 }
 
 type GithubUser struct {
@@ -174,9 +176,21 @@ type GithubUser struct {
 const githubGetAccessTokenURL = "https://github.com/login/oauth/access_token"
 const githubGetUserURL = "https://api.github.com/user"
 
-func (as *authService) GithubLogin(code string) (token string, err error) {
-	githubUser, accessToken, err := githubFlow(as.env.Github.ClientID, as.env.Github.ClientSecret, code)
+func (as *authService) GithubLogin(code string) (token string, validation validator.Validation, err error) {
+	githubService := NewGithubService()
+	validation = validator.NewValidation()
+
+	if code == "" {
+		validation.AddError("code", errors.New("code is required"))
+		return
+	}
+
+	githubUser, githubAccessToken, err := githubService.githubFlow(as.env.Github.ClientID, as.env.Github.ClientSecret, code)
 	if err != nil {
+		return "", validation, err
+	}
+	if githubAccessToken.Error != "" {
+		validation.AddError("code", errors.New(githubAccessToken.Message))
 		return
 	}
 
@@ -203,60 +217,14 @@ func (as *authService) GithubLogin(code string) (token string, err error) {
 		user = &newUser
 	}
 
-	if err = as.authRepository.SaveGithubAccessToken(user.ID, accessToken); err != nil {
+	if err = as.authRepository.SaveGithubAccessToken(user.ID, githubAccessToken.AccessToken); err != nil {
 		return
 	}
 
-	token, err = jwtutil.GenerateToken(user, accessToken, as.env.Http.JWTSecretKey)
+	token, err = jwtutil.GenerateToken(user, githubAccessToken.AccessToken, as.env.Http.JWTSecretKey)
 	if err != nil {
 		return
 	}
 
-	return
-}
-
-func githubFlow(clientID, clientSecret, code string) (githubUser GithubUser, accessToken string, err error) {
-	githubAccessToken, _ := json.Marshal(GithubAccessTokenRequest{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Code:         code,
-	})
-	httpClient := &http.Client{}
-
-	req, _ := http.NewRequest("POST", githubGetAccessTokenURL, bytes.NewBuffer(githubAccessToken))
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-	tokenResp, err := httpClient.Do(req)
-	if err != nil {
-		return
-	}
-
-	defer tokenResp.Body.Close()
-	accessTokenBody, err := io.ReadAll(tokenResp.Body)
-	var accessTokenResponse GithubAccessToken
-	json.Unmarshal(accessTokenBody, &accessTokenResponse)
-
-	githubUser, err = getUserFromGithub(accessTokenResponse)
-	return githubUser, accessTokenResponse.AccessToken, err
-}
-
-func getUserFromGithub(githubAccessToken GithubAccessToken) (githubUser GithubUser, err error) {
-	tokenType := githubAccessToken.TokenType
-	accessToken := githubAccessToken.AccessToken
-
-	req, _ := http.NewRequest("GET", githubGetUserURL, nil)
-	req.Header.Set("Authorization", tokenType+" "+accessToken)
-	httpClient := &http.Client{}
-	userResp, err := httpClient.Do(req)
-	if err != nil {
-		return
-	}
-
-	defer userResp.Body.Close()
-	userBody, err := io.ReadAll(userResp.Body)
-	if err != nil {
-		return
-	}
-	json.Unmarshal(userBody, &githubUser)
 	return
 }

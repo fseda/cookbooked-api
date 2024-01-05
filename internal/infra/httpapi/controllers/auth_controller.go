@@ -130,9 +130,6 @@ type GithubAccessTokenResponse struct {
 	TokenType   string `json:"token_type"` // Bearer
 }
 
-type GithubUserResponse struct {
-}
-
 func (a *authController) GithubLogin(c *fiber.Ctx) error {
 
 	var req GithubCodeRequest
@@ -141,9 +138,12 @@ func (a *authController) GithubLogin(c *fiber.Ctx) error {
 		return httpstatus.UnprocessableEntityError("Unable to parse body.")
 	}
 
-	token, err := a.service.GithubLogin(req.Code)
+	token, validation, err := a.service.GithubLogin(req.Code)
 	if err != nil {
 		return httpstatus.InternalServerError(err.Error())
+	}
+	if validation.HasErrors() {
+		return c.Status(fiber.StatusBadRequest).JSON(validation)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

@@ -81,12 +81,20 @@ definitions:
     type: object
   controllers.userProfileResponse:
     properties:
+      avatar_url:
+        type: string
+      bio:
+        type: string
       email:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      name:
         type: string
       role:
         type: string
-      user_id:
-        type: integer
       username:
         type: string
     type: object

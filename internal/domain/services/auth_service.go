@@ -1,25 +1,21 @@
 package services
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/fseda/cookbooked-api/internal/domain/models"
 	"github.com/fseda/cookbooked-api/internal/domain/repositories"
-	validationPkg "github.com/fseda/cookbooked-api/internal/domain/validation"
+	"github.com/fseda/cookbooked-api/internal/domain/validator"
 	"github.com/fseda/cookbooked-api/internal/infra/config"
 	jwtutil "github.com/fseda/cookbooked-api/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
-	Login(username, password string) (token string, validation validationPkg.Validation, err error)
-	Create(username, email, password string) (user *models.User, validation validationPkg.Validation, err error)
-	GithubLogin(code string) (token string, err error)
+	Login(username, password string) (token string, validation validator.Validation, err error)
+	Create(username, email, password string) (user *models.User, validation validator.Validation, err error)
+	GithubLogin(code string) (token string, validation validator.Validation, err error)
 }
 
 type authService struct {
@@ -29,21 +25,21 @@ type authService struct {
 }
 
 func NewAuthService(
-	authRepository repositories.AuthRepository, 
-	userRepository repositories.UserRepository, 
+	authRepository repositories.AuthRepository,
+	userRepository repositories.UserRepository,
 	env *config.Config,
 ) AuthService {
 	return &authService{
-		authRepository, 
-		userRepository, 
+		authRepository,
+		userRepository,
 		env,
 	}
 }
 
-func (as *authService) Login(username, password string) (token string, validation validationPkg.Validation, err error) {
+func (as *authService) Login(username, password string) (token string, validation validator.Validation, err error) {
 	var user *models.User
 
-	validation = validationPkg.NewValidation()
+	validation = validator.NewValidation()
 	if username == "" {
 		validation.AddError("username", errors.New("username is required"))
 	}
@@ -57,6 +53,10 @@ func (as *authService) Login(username, password string) (token string, validatio
 	user, err = as.userRepository.FindOneForLogin(username)
 	if err != nil {
 		return
+	}
+	if user == nil {
+		validation.AddError("user", errors.New("invalid credentials"))
+		return "", validation, nil
 	}
 
 	noMatch := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
@@ -73,7 +73,7 @@ func (as *authService) Login(username, password string) (token string, validatio
 	return
 }
 
-func (as *authService) Create(username, email, password string) (*models.User, validationPkg.Validation, error) {
+func (as *authService) Create(username, email, password string) (*models.User, validator.Validation, error) {
 	user := models.User{
 		Username:     username,
 		Email:        email,
@@ -99,8 +99,8 @@ func (as *authService) Create(username, email, password string) (*models.User, v
 	return &user, validation, nil
 }
 
-func (as *authService) validateUserRegistration(user models.User) (validation validationPkg.Validation) {
-	validation = validationPkg.NewValidation()
+func (as *authService) validateUserRegistration(user models.User) (validation validator.Validation) {
+	validation = validator.NewValidation()
 
 	if user.Username == "" {
 		validation.AddError("username", errors.New("username is required"))
@@ -121,7 +121,7 @@ func (as *authService) validateUserRegistration(user models.User) (validation va
 	if user.Email == "" {
 		validation.AddError("email", errors.New("email is required"))
 	} else {
-		if !validationPkg.IsEmailLike(user.Email) {
+		if !validator.IsEmailLike(user.Email) {
 			validation.AddError("email", errors.New("email is invalid"))
 		}
 
@@ -151,58 +151,48 @@ type GithubAccessTokenRequest struct {
 	Code         string `json:"code"`
 }
 
-type GithubAccessTokenResponse struct {
+type GithubAccessToken struct {
+	ErrorResponse
 	AccessToken string `json:"access_token"`
 	Scope       string `json:"scope"`      // "repo,gist"
 	TokenType   string `json:"token_type"` // Bearer
 }
 
+type ErrorResponse struct {
+	Message string `json:"error_description"`
+	Error   string `json:"error"`
+}
+
 type GithubUser struct {
-	ID    uint `json:"id"`
-	Login string `json:"login"`
-	Email string `json:"email"`
+	ID       uint   `json:"id"`
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Bio      string `json:"bio"`
+	Avatar   string `json:"avatar_url"`
+	Location string `json:"location"`
 }
 
 const githubGetAccessTokenURL = "https://github.com/login/oauth/access_token"
 const githubGetUserURL = "https://api.github.com/user"
 
-func (as *authService) GithubLogin(code string) (token string, err error) {
-	accessTokenRequest, _ := json.Marshal(GithubAccessTokenRequest{
-		ClientID:     as.env.Github.ClientID,
-		ClientSecret: as.env.Github.ClientSecret,
-		Code:         code,
-	})
-	client := &http.Client{}
+func (as *authService) GithubLogin(code string) (token string, validation validator.Validation, err error) {
+	githubService := NewGithubService()
+	validation = validator.NewValidation()
 
-	req, _ := http.NewRequest("POST", githubGetAccessTokenURL, bytes.NewBuffer(accessTokenRequest))
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-	tokenResp, err := client.Do(req)
-	if err != nil {
+	if code == "" {
+		validation.AddError("code", errors.New("code is required"))
 		return
 	}
 
-	defer tokenResp.Body.Close()
-	accessTokenBody, err := io.ReadAll(tokenResp.Body)
-	var accessTokenResponse GithubAccessTokenResponse
-	json.Unmarshal(accessTokenBody, &accessTokenResponse)
-	tokenType := accessTokenResponse.TokenType
-	accessToken := accessTokenResponse.AccessToken
-
-	req, _ = http.NewRequest("GET", githubGetUserURL, nil)
-	req.Header.Set("Authorization", tokenType+" "+accessToken)
-	userResp, err := client.Do(req)
+	githubUser, githubAccessToken, err := githubService.githubFlow(as.env.Github.ClientID, as.env.Github.ClientSecret, code)
 	if err != nil {
+		return "", validation, err
+	}
+	if githubAccessToken.Error != "" {
+		validation.AddError("code", errors.New(githubAccessToken.Message))
 		return
 	}
-
-	defer userResp.Body.Close()
-	userBody, err := io.ReadAll(userResp.Body)
-	if err != nil {
-		return
-	}
-	var githubUser GithubUser
-	json.Unmarshal(userBody, &githubUser)
 
 	user, err := as.userRepository.FindOneByGithubID(githubUser.ID)
 	if err != nil {
@@ -213,6 +203,10 @@ func (as *authService) GithubLogin(code string) (token string, err error) {
 		newUser := models.User{
 			Username: githubUser.Login,
 			Email:    githubUser.Email,
+			Name:     githubUser.Name,
+			Bio:      githubUser.Bio,
+			Avatar:   githubUser.Avatar,
+			Location: githubUser.Location,
 			GithubID: fmt.Sprint(githubUser.ID),
 		}
 
@@ -223,11 +217,11 @@ func (as *authService) GithubLogin(code string) (token string, err error) {
 		user = &newUser
 	}
 
-	if err = as.authRepository.SaveGithubAccessToken(user.ID, accessTokenResponse.AccessToken); err != nil {
+	if err = as.authRepository.SaveGithubAccessToken(user.ID, githubAccessToken.AccessToken); err != nil {
 		return
 	}
 
-	token, err = jwtutil.GenerateToken(user, accessToken, as.env.Http.JWTSecretKey)
+	token, err = jwtutil.GenerateToken(user, githubAccessToken.AccessToken, as.env.Http.JWTSecretKey)
 	if err != nil {
 		return
 	}
